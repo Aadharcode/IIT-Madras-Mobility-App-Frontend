@@ -1,4 +1,4 @@
-# IITM-Mobile Smartphone Application
+# IIT Madras Mobility Application
 
 ## Project Overview
 
