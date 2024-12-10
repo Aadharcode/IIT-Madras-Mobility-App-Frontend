@@ -70,15 +70,13 @@ The project aims to tackle several key challenges:
   - CCTV camera supplementary data
   - Vehicular pass tracking
 
-## Project Timeline
+## Tech Stack
+- Flutter/React-Native for frontend
+- Nest.js + Typescript for backend(Better version of Node.js)
+- PostgreSQL Database
+- TypeORM for orm
+- AWS Ec2 Hosting
 
-The project is planned to be completed over 12 weeks, covering:
-- Benchmarking
-- App development
-- Data collection
-- Analysis and modeling
-- Vehicle design
-- Mobility solution implementation
 
 ## Proposed Outcomes
 
