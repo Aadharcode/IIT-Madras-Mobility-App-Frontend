@@ -1,118 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Location Tracker',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const LocationTrackerPage(),
+      home: MapScreen(),
     );
   }
 }
 
-class LocationTrackerPage extends StatefulWidget {
-  const LocationTrackerPage({super.key});
-
+class MapScreen extends StatefulWidget {
   @override
-  State<LocationTrackerPage> createState() => _LocationTrackerPageState();
+  _MapScreenState createState() => _MapScreenState();
 }
 
-class _LocationTrackerPageState extends State<LocationTrackerPage> {
-  late GoogleMapController mapController;
-  Location location = Location();
-  LatLng? _currentLocation;
-  bool _serviceEnabled = false;
-  PermissionStatus _permissionGranted = PermissionStatus.denied;
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? _mapController;
+  LatLng? _currentPosition;
 
   @override
   void initState() {
     super.initState();
-    _checkLocationPermission();
+    _getCurrentLocation();
   }
 
-  Future<void> _checkLocationPermission() async {
-    // Check if location service is enabled
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check location services
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location services are disabled')));
+      return;
+    }
+
+    // Check permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Location permissions are denied')));
         return;
       }
     }
 
-    // Check for location permissions
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
 
-    // Get current location
-    location.onLocationChanged.listen((LocationData currentLocation) {
-      setState(() {
-        _currentLocation =
-            LatLng(currentLocation.latitude!, currentLocation.longitude!);
-      });
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
     });
-  }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    // Move camera to current location
+    _mapController?.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: _currentPosition!, zoom: 15.0)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Location Tracker'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text('My Location'),
       ),
-      body: _currentLocation == null
-          ? const Center(child: CircularProgressIndicator())
+      body: _currentPosition == null
+          ? Center(child: CircularProgressIndicator())
           : GoogleMap(
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(
-                target: _currentLocation!,
-                zoom: 15.0,
-              ),
+              initialCameraPosition:
+                  CameraPosition(target: _currentPosition!, zoom: 15.0),
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
-              markers: {
-                Marker(
-                  markerId: const MarkerId('current_location'),
-                  position: _currentLocation!,
-                  infoWindow: const InfoWindow(
-                    title: 'My Location',
-                    snippet: 'Current GPS Location',
-                  ),
-                ),
+              onMapCreated: (GoogleMapController controller) {
+                _mapController = controller;
               },
             ),
-      floatingActionButton: _currentLocation != null
-          ? FloatingActionButton(
-              onPressed: () {
-                // Animate camera to current location
-                mapController.animateCamera(
-                  CameraUpdate.newLatLng(_currentLocation!),
-                );
-              },
-              child: const Icon(Icons.my_location),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.my_location),
+        onPressed: _getCurrentLocation,
+      ),
     );
   }
 }
