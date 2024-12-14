@@ -149,12 +149,12 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Start Trip'),
         content: const Text('Are you ready to start tracking your trip?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -166,7 +166,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                           sampleMonuments.first, // TODO: Detect nearest
                     ),
                   );
-              Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
             },
             child: const Text('Start'),
           ),
@@ -179,46 +179,52 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => BlocConsumer<TripBloc, TripState>(
-        listener: (context, state) {
-          // Close dialog when trip ends and is not loading
-          if (state.currentTrip == null && !state.isLoading) {
-            Navigator.of(dialogContext).pop();
-          }
-        },
-        builder: (context, state) {
-          return AlertDialog(
-            title: const Text('End Trip'),
-            content: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : TripDetailsForm(
-                    onSubmit: (vehicleType, purpose, occupancy) {
-                      final bloc = context.read<TripBloc>();
-                      // First update trip details
-                      bloc.add(UpdateTripDetails(
-                        vehicleType: vehicleType,
-                        purpose: purpose,
-                        occupancy: occupancy,
-                      ));
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: BlocProvider.value(
+          value: context.read<TripBloc>(),
+          child: BlocConsumer<TripBloc, TripState>(
+            listener: (context, state) {
+              if (state.currentTrip == null && !state.isLoading) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            builder: (context, state) {
+              return AlertDialog(
+                title: const Text('End Trip'),
+                content: state.isLoading
+                    ? const SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : TripDetailsForm(
+                        onSubmit: (vehicleType, purpose, occupancy) {
+                          final bloc = context.read<TripBloc>();
 
-                      // Then end the trip after a short delay to ensure details are updated
-                      Future.delayed(const Duration(milliseconds: 100), () {
-                        bloc.add(EndTrip(
-                          endMonument:
-                              sampleMonuments.last, // TODO: Detect nearest
-                        ));
-                      });
-                    },
-                  ),
-            actions: [
-              if (!state.isLoading)
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-            ],
-          );
-        },
+                          // Update trip details and end trip
+                          bloc
+                            ..add(UpdateTripDetails(
+                              vehicleType: vehicleType,
+                              purpose: purpose,
+                              occupancy: occupancy,
+                            ))
+                            ..add(EndTrip(
+                              endMonument:
+                                  sampleMonuments.last, // TODO: Detect nearest
+                            ));
+                        },
+                      ),
+                actions: [
+                  if (!state.isLoading)
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

@@ -41,7 +41,7 @@ class Monument extends Equatable {
   bool isInRange(LatLng point) {
     // Using the Haversine formula to calculate distance
     const double earthRadius = 6371000; // Earth's radius in meters
-    
+
     double lat1 = position.latitude * (pi / 180);
     double lat2 = point.latitude * (pi / 180);
     double dLat = (point.latitude - position.latitude) * (pi / 180);
@@ -68,8 +68,8 @@ final List<Monument> sampleMonuments = [
   ),
   Monument(
     id: 'gate2',
-    name: 'Krishna Gate',
+    name: 'Krishna Hostel',
     position: const LatLng(12.986681, 80.237733),
   ),
   // Add more monuments as needed
-]; 
+];

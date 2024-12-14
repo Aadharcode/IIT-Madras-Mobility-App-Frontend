@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../data/models/trip.dart';
-import '../../data/models/monument.dart';
+// import '../../data/models/monument.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class TripState extends Equatable {

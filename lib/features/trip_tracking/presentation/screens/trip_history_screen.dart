@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/models/trip.dart';
 import '../../data/models/monument.dart';
 import '../bloc/trip_bloc.dart';
-import '../bloc/trip_event.dart';
+// import '../bloc/trip_event.dart';
 import '../bloc/trip_state.dart';
 
 class TripHistoryScreen extends StatelessWidget {
@@ -98,8 +98,7 @@ class _TripCard extends StatelessWidget {
                   _buildInfoRow('End Time', timeFormat.format(trip.endTime!)),
                 const SizedBox(height: 8),
                 _buildInfoRow('From', startMonument.name),
-                if (endMonument != null)
-                  _buildInfoRow('To', endMonument.name),
+                if (endMonument != null) _buildInfoRow('To', endMonument.name),
                 const SizedBox(height: 8),
                 if (trip.vehicleType != null) ...[
                   _buildInfoRow(
@@ -207,4 +206,4 @@ class _TripCard extends StatelessWidget {
         return 'Food';
     }
   }
-} 
+}

@@ -143,7 +143,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthBloc>().add(
-                                SendPhoneNumberVerification(_phoneController.text),
+                                SendPhoneNumberVerification(
+                                    _phoneController.text),
                               );
                         }
                       },
