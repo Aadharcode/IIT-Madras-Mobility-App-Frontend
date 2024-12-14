@@ -10,25 +10,25 @@ The IITM-Mobile Smartphone Application is a innovative solution designed to coll
 <tr>
     <td><img src="assets/screenshots/1.PNG" alt="Step 1" width="200"/></td>
     <td>➡️</td>
-    <td><img src="assets/screenshots/2.png" alt="Step 2" width="200"/></td>
+    <td><img src="assets/screenshots/2.PNG" alt="Step 2" width="200"/></td>
     <td>➡️</td>
-    <td><img src="assets/screenshots/3.png" alt="Step 3" width="200"/></td>
+    <td><img src="assets/screenshots/3.PNG" alt="Step 3" width="200"/></td>
 </tr>
 </table>
 
 <table>
 <tr>
-    <td><img src="assets/screenshots/4.png" alt="Step 4" width="200"/></td>
+    <td><img src="assets/screenshots/4.PNG" alt="Step 4" width="200"/></td>
     <td>➡️</td>
-    <td><img src="assets/screenshots/5.png" alt="Step 5" width="200"/></td>
+    <td><img src="assets/screenshots/5.PNG" alt="Step 5" width="200"/></td>
 </tr>
 </table>
 
 <table>
 <tr>
-    <td><img src="assets/screenshots/6.png" alt="Step 6" width="200"/></td>
+    <td><img src="assets/screenshots/6.PNG" alt="Step 6" width="200"/></td>
     <td>➡️</td>
-    <td><img src="assets/screenshots/7.png" alt="Step 7" width="200"/></td>
+    <td><img src="assets/screenshots/7.PNG" alt="Step 7" width="200"/></td>
 </tr>
 </table>
 
