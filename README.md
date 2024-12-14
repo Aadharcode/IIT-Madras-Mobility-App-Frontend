@@ -8,7 +8,7 @@ The IITM-Mobile Smartphone Application is a innovative solution designed to coll
 
 <table>
 <tr>
-    <td><img src="assets/screenshots/1.png" alt="Step 1" width="200"/></td>
+    <td><img src="assets/screenshots/1.PNG" alt="Step 1" width="200"/></td>
     <td>➡️</td>
     <td><img src="assets/screenshots/2.png" alt="Step 2" width="200"/></td>
     <td>➡️</td>
