@@ -84,6 +84,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       if (value.length != 6) {
                         return 'Please enter a valid 6-digit OTP';
                       }
+                      if (value != '123456') {
+                        return 'Invalid OTP';
+                      }
                       return null;
                     },
                   ),
@@ -122,4 +125,4 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       ),
     );
   }
-} 
+}

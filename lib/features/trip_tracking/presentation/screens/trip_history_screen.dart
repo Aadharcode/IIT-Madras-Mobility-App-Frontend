@@ -18,9 +18,12 @@ class TripHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         title: const Text('Trip History'),
+        centerTitle: true,
       ),
       body: BlocBuilder<TripBloc, TripState>(
         builder: (context, state) {
@@ -29,12 +32,36 @@ class TripHistoryScreen extends StatelessWidget {
           }
 
           if (state.pastTrips.isEmpty) {
-            return const Center(
-              child: Text('No trips recorded yet'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    size: 64,
+                    color: theme.colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No trips recorded yet',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start tracking your first trip!',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onBackground.withOpacity(0.5),
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: state.pastTrips.length,
             itemBuilder: (context, index) {
               final trip = state.pastTrips[index];
@@ -54,6 +81,7 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final startMonument = sampleMonuments.firstWhere(
       (m) => m.id == trip.startMonumentId,
       orElse: () => const Monument(
@@ -78,68 +106,166 @@ class _TripCard extends StatelessWidget {
     final timeFormat = DateFormat('hh:mm a');
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ExpansionTile(
-        title: Text(
-          '${dateFormat.format(trip.startTime)} Trip',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _getVehicleIcon(trip.vehicleType),
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          title: Text(
+            dateFormat.format(trip.startTime),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Text(
+            '${_getVehicleTypeText(trip.vehicleType)} • ${_getPurposeText(trip.purpose)}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onBackground.withOpacity(0.7),
+            ),
+          ),
+          children: [
+            const Divider(),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              context,
+              icon: Icons.schedule,
+              label: 'Start Time',
+              value: timeFormat.format(trip.startTime),
+            ),
+            if (trip.endTime != null)
+              _buildInfoRow(
+                context,
+                icon: Icons.schedule,
+                label: 'End Time',
+                value: timeFormat.format(trip.endTime!),
+              ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              context,
+              icon: Icons.location_on,
+              label: 'From',
+              value: startMonument.name,
+            ),
+            if (endMonument != null)
+              _buildInfoRow(
+                context,
+                icon: Icons.location_on,
+                label: 'To',
+                value: endMonument.name,
+              ),
+            const SizedBox(height: 8),
+            if (trip.vehicleType != null) ...[
+              _buildInfoRow(
+                context,
+                icon: _getVehicleIcon(trip.vehicleType),
+                label: 'Mode',
+                value: _getVehicleTypeText(trip.vehicleType),
+              ),
+              if (trip.occupancy != null &&
+                  (trip.vehicleType == VehicleType.twoWheeler ||
+                      trip.vehicleType == VehicleType.fourWheeler))
+                _buildInfoRow(
+                  context,
+                  icon: Icons.people,
+                  label: 'Occupancy',
+                  value: '${trip.occupancy} passenger${trip.occupancy! > 1 ? 's' : ''}',
+                ),
+            ],
+            if (trip.purpose != null)
+              _buildInfoRow(
+                context,
+                icon: Icons.category,
+                label: 'Purpose',
+                value: _getPurposeText(trip.purpose),
+              ),
+            if (trip.checkpoints.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Checkpoints',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...trip.checkpoints.map((checkpoint) {
+                final monument = sampleMonuments.firstWhere(
+                  (m) => m.id == checkpoint.monumentId,
+                  orElse: () => const Monument(
+                    id: 'unknown',
+                    name: 'Unknown Location',
+                    position: LatLng(0, 0),
+                  ),
+                );
+                return Padding(
+                  padding: const EdgeInsets.only(left: 32, bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${timeFormat.format(checkpoint.timestamp)} - ${monument.name}',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ],
         ),
-        subtitle: Text(
-          '${_getVehicleTypeText(trip.vehicleType)} • ${_getPurposeText(trip.purpose)}',
-        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow('Start Time', timeFormat.format(trip.startTime)),
-                if (trip.endTime != null)
-                  _buildInfoRow('End Time', timeFormat.format(trip.endTime!)),
-                const SizedBox(height: 8),
-                _buildInfoRow('From', startMonument.name),
-                if (endMonument != null) _buildInfoRow('To', endMonument.name),
-                const SizedBox(height: 8),
-                if (trip.vehicleType != null) ...[
-                  _buildInfoRow(
-                    'Mode',
-                    _getVehicleTypeText(trip.vehicleType),
-                  ),
-                  if (trip.occupancy != null &&
-                      (trip.vehicleType == VehicleType.twoWheeler ||
-                          trip.vehicleType == VehicleType.fourWheeler))
-                    _buildInfoRow(
-                      'Occupancy',
-                      '${trip.occupancy} passenger${trip.occupancy! > 1 ? 's' : ''}',
-                    ),
-                ],
-                if (trip.purpose != null)
-                  _buildInfoRow('Purpose', _getPurposeText(trip.purpose)),
-                const SizedBox(height: 8),
-                if (trip.checkpoints.isNotEmpty) ...[
-                  const Text(
-                    'Checkpoints:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  ...trip.checkpoints.map((checkpoint) {
-                    final monument = sampleMonuments.firstWhere(
-                      (m) => m.id == checkpoint.monumentId,
-                      orElse: () => const Monument(
-                        id: 'unknown',
-                        name: 'Unknown Location',
-                        position: LatLng(0, 0),
-                      ),
-                    );
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 16, bottom: 4),
-                      child: Text(
-                        '${timeFormat.format(checkpoint.timestamp)} - ${monument.name}',
-                      ),
-                    );
-                  }),
-                ],
-              ],
+          Icon(
+            icon,
+            size: 20,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium,
             ),
           ),
         ],
@@ -147,28 +273,23 @@ class _TripCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
-    );
+  IconData _getVehicleIcon(VehicleType? type) {
+    switch (type) {
+      case VehicleType.walk:
+        return Icons.directions_walk;
+      case VehicleType.cycle:
+        return Icons.directions_bike;
+      case VehicleType.twoWheeler:
+        return Icons.motorcycle;
+      case VehicleType.threeWheeler:
+        return Icons.electric_rickshaw;
+      case VehicleType.fourWheeler:
+        return Icons.directions_car;
+      case VehicleType.iitmBus:
+        return Icons.directions_bus;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   String _getVehicleTypeText(VehicleType? type) {
