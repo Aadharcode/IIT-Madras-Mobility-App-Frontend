@@ -20,7 +20,7 @@ class TripHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Trip History'),
         centerTitle: true,
@@ -45,14 +45,14 @@ class TripHistoryScreen extends StatelessWidget {
                   Text(
                     'No trips recorded yet',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Start tracking your first trip!',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onBackground.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -133,7 +133,7 @@ class _TripCard extends StatelessWidget {
           subtitle: Text(
             '${_getVehicleTypeText(trip.vehicleType)} • ${_getPurposeText(trip.purpose)}',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
           children: [
@@ -258,7 +258,7 @@ class _TripCard extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ),

@@ -70,7 +70,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       userId: event.userId,
       startTime: DateTime.now(),
       startMonumentId: event.startMonument.id,
-      checkpoints: [],
+      checkpoints: const [],
     );
 
     emit(state.copyWith(

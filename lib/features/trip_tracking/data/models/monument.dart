@@ -61,15 +61,15 @@ class Monument extends Equatable {
 
 // Sample monuments data (to be replaced with actual data)
 final List<Monument> sampleMonuments = [
-  Monument(
+  const Monument(
     id: 'gate1',
     name: 'Main Gate',
-    position: const LatLng(12.991214, 80.233276),
+    position: LatLng(12.991214, 80.233276),
   ),
-  Monument(
+  const Monument(
     id: 'gate2',
     name: 'Krishna Hostel',
-    position: const LatLng(12.986681, 80.237733),
+    position: LatLng(12.986681, 80.237733),
   ),
   // Add more monuments as needed
 ];
