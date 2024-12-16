@@ -165,7 +165,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                               ),
                             ),
                           ),
-                          if (state.currentTrip != null) ...[
+                          if (state.isActive == true) ...[
                             const SizedBox(width: 16),
                             Container(
                               decoration: BoxDecoration(
@@ -201,7 +201,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     const Spacer(),
                     if (state.isLoading)
                       const Center(child: CircularProgressIndicator())
-                    else if (!state.isTracking && state.currentTrip == null)
+                    else if (state.isActive == false)
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: ElevatedButton.icon(
@@ -389,6 +389,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                               endMonument:
                                   sampleMonuments.last, // TODO: Detect nearest
                             ));
+                            Navigator.of(dialogContext).pop();
                         },
                       ),
                 actions: [

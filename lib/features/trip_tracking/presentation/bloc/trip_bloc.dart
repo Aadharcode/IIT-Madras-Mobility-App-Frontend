@@ -60,7 +60,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     StartTrip event,
     Emitter<TripState> emit,
   ) async {
-    if (state.currentTrip != null) {
+    if (state.isActive == true) {
       emit(state.copyWith(error: 'A trip is already in progress'));
       return;
     }
@@ -77,6 +77,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       currentTrip: trip,
       isTracking: true,
       error: null,
+      isActive: true,
     ));
   }
 
@@ -93,9 +94,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       emit(state.copyWith(isLoading: true, error: null));
 
       // Get the current trip with all its details
-      final currentTrip = state.currentTrip!;
+      final currentTrips = state.currentTrip!;
       
-      final endedTrip = currentTrip.copyWith(
+      final endedTrip = currentTrips.copyWith(
         endTime: DateTime.now(),
         endMonumentId: event.endMonument.id,
         isActive: false,
@@ -106,13 +107,17 @@ class TripBloc extends Bloc<TripEvent, TripState> {
 
       // Reset all trip-related state
       emit(state.copyWith(
-        currentTrip: null,
         pastTrips: [...state.pastTrips, endedTrip],
         isTracking: false,
         isLoading: false,
         error: null,
-        currentLocation: state.currentLocation, // Preserve current location
+        currentLocation: state.currentLocation, 
+        isActive: false
       ));
+      emit(state.copyWith(
+        currentTrip: null,
+      ));
+
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
