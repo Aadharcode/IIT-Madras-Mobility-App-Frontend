@@ -29,10 +29,12 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     _initializeLocationTracking();
   }
 
+  
+
   Future<void> _initializeLocationTracking() async {
     final hasPermission = await _locationService.requestLocationPermission();
     if (!hasPermission) {
-      emit(state.copyWith(error: 'Location permission denied'));
+      add(TripErrorOccurred('Location permission denied'));
       return;
     }
 

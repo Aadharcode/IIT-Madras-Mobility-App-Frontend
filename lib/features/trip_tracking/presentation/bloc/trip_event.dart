@@ -79,3 +79,9 @@ class LoadPastTrips extends TripEvent {
   @override
   List<Object> get props => [userId];
 } 
+
+class TripErrorOccurred extends TripEvent {
+  final String error;
+
+  const TripErrorOccurred(this.error);
+}
