@@ -98,6 +98,7 @@ class _TripCard extends StatelessWidget {
               id: 'unknown',
               name: 'Unknown Location',
               position: LatLng(0, 0),
+              
             ),
           )
         : null;

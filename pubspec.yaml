@@ -19,6 +19,7 @@ dependencies:
   intl: ^0.18.1
   uuid: ^4.2.1
   flutter_svg: ^2.0.9
+  flutter_lucide: ^1.6.1
 
 dev_dependencies:
   flutter_test:

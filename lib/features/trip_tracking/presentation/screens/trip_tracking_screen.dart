@@ -7,6 +7,7 @@ import '../bloc/trip_event.dart';
 import '../bloc/trip_state.dart';
 import '../widgets/trip_details_form.dart';
 import 'trip_history_screen.dart';
+// import 'package:flutter_lucide/flutter_lucide.dart';
 
 class TripTrackingScreen extends StatefulWidget {
   final String userId;
@@ -31,28 +32,69 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     _initializeMonuments();
   }
 
+
   void _initializeMonuments() {
-    for (final monument in sampleMonuments) {
-      _monumentZones.add(
-        Circle(
-          circleId: CircleId(monument.id),
-          center: monument.position,
-          radius: monument.radius,
-          fillColor: Colors.blue.withOpacity(0.15),
-          strokeColor: Colors.blue.withOpacity(0.5),
-          strokeWidth: 2,
+  for (final monument in sampleMonuments) {
+    _monumentZones.add(
+      Circle(
+        circleId: CircleId(monument.id),
+        center: monument.position,
+        radius: monument.radius,
+        fillColor: Colors.blue.withOpacity(0.15),
+        strokeColor: Colors.blue.withOpacity(0.5),
+        strokeWidth: 2,
+      ),
+    );
+    _markers.add(
+      Marker(
+        markerId: MarkerId(monument.id),
+        position: monument.position,
+        infoWindow: InfoWindow(
+          title: monument.name, 
         ),
-      );
-      _markers.add(
-        Marker(
-          markerId: MarkerId(monument.id),
-          position: monument.position,
-          infoWindow: InfoWindow(title: monument.name),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        ),
-      );
-    }
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        onTap: () {
+          _showMonumentDescription(context,monument.name, monument.description!);
+        },
+      ),
+    );
+    child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              color: Colors.black.withOpacity(0.7),
+              child: Text(
+                monument.name,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ),
+        ],
+    );
   }
+}
+
+void _showMonumentDescription(BuildContext context,String name, String description) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(name),
+      content: Text(description),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
