@@ -8,6 +8,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<VerifyOTP>(_onVerifyOTP);
     on<UpdateUserProfile>(_onUpdateUserProfile);
     on<SignOut>(_onSignOut);
+    on<LogoutEvent>(_onLogoutEvent);
   }
 
   Future<void> _onSendPhoneNumberVerification(
@@ -26,6 +27,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onLogoutEvent(
+    LogoutEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      // Perform any cleanup logic (e.g., clearing session or cache data)
+      emit(state.copyWith(
+        isAuthenticated: false,
+        phoneNumber: null,
+        userCategory: null,
+        residenceType: null,
+        userId: null,
+        error: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
         error: e.toString(),
       ));
     }

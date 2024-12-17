@@ -17,6 +17,9 @@ class SendPhoneNumberVerification extends AuthEvent {
   List<Object> get props => [phoneNumber];
 }
 
+class LogoutEvent extends AuthEvent {
+  const LogoutEvent();
+}
 class VerifyOTP extends AuthEvent {
   final String otp;
 

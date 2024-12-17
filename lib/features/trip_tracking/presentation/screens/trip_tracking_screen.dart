@@ -7,7 +7,8 @@ import '../bloc/trip_event.dart';
 import '../bloc/trip_state.dart';
 import '../widgets/trip_details_form.dart';
 import 'trip_history_screen.dart';
-// import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'profile_page.dart';
 
 class TripTrackingScreen extends StatefulWidget {
   final String userId;
@@ -158,6 +159,36 @@ void _showMonumentDescription(BuildContext context,String name, String descripti
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.error,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.colorScheme.error.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () =>  Navigator.of(context).push(
+                                                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                                                ),
+                                  customBorder: const CircleBorder(),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Icon(
+                                      LucideIcons.user, 
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),  
+                            const SizedBox(width: 16),                      
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
