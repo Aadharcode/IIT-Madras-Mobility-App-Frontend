@@ -85,3 +85,8 @@ class TripErrorOccurred extends TripEvent {
 
   const TripErrorOccurred(this.error);
 }
+
+class CheckLocation extends TripEvent {
+  @override
+  List<Object?> get props => [];
+}

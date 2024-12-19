@@ -10,53 +10,7 @@ import '../widgets/trip_details_form.dart';
 import 'trip_history_screen.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'profile_page.dart';
-import 'dart:async';
 
-
-class LocationChecker {
-  Timer? _timer;
-  Position? _previousPosition;
-  int _stationaryCounter = 0;
-
-  // Start checking location every 1 minute
-  void startLocationCheck() {
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-      final currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      if (_previousPosition == null) {
-        _previousPosition = currentPosition;
-        print(_previousPosition);
-        return;
-      }
-
-      double distance = Geolocator.distanceBetween(
-        _previousPosition!.latitude,
-        _previousPosition!.longitude,
-        currentPosition.latitude,
-        currentPosition.longitude,
-      );
-
-      if (distance < 10) {
-        // Location is stationary
-        _stationaryCounter++;
-        print('Stationary for $_stationaryCounter seconds');
-
-        if (_stationaryCounter >= 4) {
-          EndTrip(
-                endMonument:
-                    sampleMonuments.last, // TODO: Detect nearest
-              );// Ensure `context` is available here
-        }
-      } else {
-        // Reset if location has moved
-        _stationaryCounter = 0;
-        _previousPosition = currentPosition;
-      }
-    });
-  }
-}
 
 
 class TripTrackingScreen extends StatefulWidget {

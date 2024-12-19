@@ -13,6 +13,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   final LocationService _locationService;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<Monument>? _monumentSubscription;
+  Timer? _locationTimer;
+  Position? _previousPosition;
+  int _stationaryCounter = 0;
   final _uuid = const Uuid();
 
   TripBloc({required LocationService locationService})
@@ -25,6 +28,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<LocationUpdated>(_onLocationUpdated);
     on<IdleTimeout>(_onIdleTimeout);
     on<LoadPastTrips>(_onLoadPastTrips);
+    on<CheckLocation>(_onCheckLocation);
 
     _initializeLocationTracking();
   }
@@ -66,6 +70,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       emit(state.copyWith(error: 'A trip is already in progress'));
       return;
     }
+    _locationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      add(CheckLocation());
+    });
 
     final trip = Trip(
       id: _uuid.v4(),
@@ -106,7 +113,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
 
       // Add a small delay to show loading state
       await Future.delayed(const Duration(milliseconds: 500));
-
+       _locationTimer?.cancel();
       // Reset all trip-related state
       emit(state.copyWith(
         pastTrips: [...state.pastTrips, endedTrip],
@@ -209,9 +216,43 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       error: null,
     ));
   }
+  Future<void> _onCheckLocation(CheckLocation event, Emitter<TripState> emit) async {
+    try {
+      final currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (_previousPosition == null) {
+        _previousPosition = currentPosition;
+        return;
+      }
+
+      double distance = Geolocator.distanceBetween(
+        _previousPosition!.latitude,
+        _previousPosition!.longitude,
+        currentPosition.latitude,
+        currentPosition.longitude,
+      );
+
+      if (distance < 10) {
+        _stationaryCounter++;
+        emit(state.copyWith(counter: _stationaryCounter.toString()));
+
+        if (_stationaryCounter >= 5) {
+          add(EndTrip(endMonument: sampleMonuments.last));
+        }
+      } else {
+        _stationaryCounter = 0;
+        _previousPosition = currentPosition;
+      }
+    } catch (e) {
+      emit(state.copyWith(error: 'Error checking location: $e'));
+    }
+  }
 
   @override
   Future<void> close() {
+     _locationTimer?.cancel();
     _locationSubscription?.cancel();
     _monumentSubscription?.cancel();
     _locationService.dispose();
