@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../data/models/monument.dart';
 import '../bloc/trip_bloc.dart';
 import '../bloc/trip_event.dart';
@@ -9,6 +10,54 @@ import '../widgets/trip_details_form.dart';
 import 'trip_history_screen.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'profile_page.dart';
+import 'dart:async';
+
+
+class LocationChecker {
+  Timer? _timer;
+  Position? _previousPosition;
+  int _stationaryCounter = 0;
+
+  // Start checking location every 1 minute
+  void startLocationCheck() {
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      final currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (_previousPosition == null) {
+        _previousPosition = currentPosition;
+        print(_previousPosition);
+        return;
+      }
+
+      double distance = Geolocator.distanceBetween(
+        _previousPosition!.latitude,
+        _previousPosition!.longitude,
+        currentPosition.latitude,
+        currentPosition.longitude,
+      );
+
+      if (distance < 10) {
+        // Location is stationary
+        _stationaryCounter++;
+        print('Stationary for $_stationaryCounter seconds');
+
+        if (_stationaryCounter >= 4) {
+          EndTrip(
+                endMonument:
+                    sampleMonuments.last, // TODO: Detect nearest
+              );// Ensure `context` is available here
+        }
+      } else {
+        // Reset if location has moved
+        _stationaryCounter = 0;
+        _previousPosition = currentPosition;
+      }
+    });
+  }
+}
+
 
 class TripTrackingScreen extends StatefulWidget {
   final String userId;
@@ -396,34 +445,40 @@ void _showMonumentDescription(BuildContext context,String name, String descripti
   }
 
   void _showTripStartDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Start Trip'),
-        content: const Text('Are you ready to start tracking your trip?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              context.read<TripBloc>().add(
-                    StartTrip(
-                      userId: widget.userId,
-                      startMonument:
-                          sampleMonuments.first, // TODO: Detect nearest
-                    ),
-                  );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Start'),
-          ),
-        ],
-      ),
-    );
-  }
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Start Trip'),
+      content: const Text('Are you ready to start tracking your trip?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            context.read<TripBloc>().add(
+                  StartTrip(
+                    userId: widget.userId,
+                    startMonument:
+                        sampleMonuments.first, // TODO: Detect nearest
+                  ),
+                );
+
+            // Start location checking
+            final locationChecker = LocationChecker();
+            locationChecker.startLocationCheck();
+
+            Navigator.of(dialogContext).pop();
+          },
+          child: const Text('Start'),
+        ),
+      ],
+    ),
+  );
+}
+
 
   void _showTripEndDialog(BuildContext context) {
     showDialog(
@@ -479,7 +534,7 @@ void _showMonumentDescription(BuildContext context,String name, String descripti
       ),
     );
   }
-
+  
   @override
   void dispose() {
     _mapController?.dispose();
