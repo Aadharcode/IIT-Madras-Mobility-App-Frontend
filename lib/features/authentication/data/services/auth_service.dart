@@ -45,7 +45,7 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> verifyOtp(String phoneNumber, String otp) async {
+  Future<Map<String, dynamic>> verifyOtp(String phoneNumber, String name, String otp) async {
     try {
       print('🔐 Attempting to verify OTP');
       print('📱 Phone number: $phoneNumber');
@@ -54,6 +54,7 @@ class AuthService {
 
       final body = json.encode({
         'number': int.parse(phoneNumber),
+        'name': name,
         'otp': otp,
       });
       print('📦 Request body: $body');

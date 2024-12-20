@@ -10,11 +10,12 @@ abstract class AuthEvent extends Equatable {
 
 class SendPhoneNumberVerification extends AuthEvent {
   final String phoneNumber;
+  final String name;
 
-  const SendPhoneNumberVerification(this.phoneNumber);
+  const SendPhoneNumberVerification(this.phoneNumber, this.name);
 
   @override
-  List<Object> get props => [phoneNumber];
+  List<Object> get props => [phoneNumber, name];
 }
 
 class LogoutEvent extends AuthEvent {
@@ -22,8 +23,9 @@ class LogoutEvent extends AuthEvent {
 }
 class VerifyOTP extends AuthEvent {
   final String otp;
+  final String name;
 
-  const VerifyOTP(this.otp);
+  const VerifyOTP(this.otp, this.name);
 
   @override
   List<Object> get props => [otp];

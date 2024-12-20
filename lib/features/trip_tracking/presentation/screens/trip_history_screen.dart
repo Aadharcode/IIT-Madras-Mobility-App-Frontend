@@ -27,7 +27,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('Loading past trips for user: ${widget.userId}');
+    //debugPrint('Loading past trips for user: ${widget.userId}');
     BlocProvider.of<TripBloc>(context).add(LoadPastTrips(widget.userId));
     monumentMap = {};
     _loadMonuments();
@@ -35,23 +35,23 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
 
   Future<void> _loadMonuments() async {
     try {
-      debugPrint('Fetching monuments...');
+      //debugPrint('Fetching monuments...');
       final monuments = await MonumentService.fetchMonuments();
       setState(() {
         monumentMap = {
           for (var monument in monuments) monument.id: monument,
         };
       });
-      debugPrint('Loaded monuments: ${monumentMap.keys}');
+      //debugPrint('Loaded monuments: ${monumentMap.keys}');
     } catch (e) {
-      debugPrint('Error fetching monuments: $e');
+      //debugPrint('Error fetching monuments: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    debugPrint('Building TripHistoryScreen UI');
+    //debugPrint('Building TripHistoryScreen UI');
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -62,12 +62,12 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
       body: BlocBuilder<TripBloc, TripState>(
         builder: (context, state) {
           if (state.isLoading) {
-            debugPrint('Loading trips...');
+            //debugPrint('Loading trips...');
             return const Center(child: CircularProgressIndicator());
           }
 
           if (state.pastTrips.isEmpty) {
-            debugPrint('No trips found');
+            //debugPrint('No trips found');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -96,13 +96,13 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
             );
           }
 
-          debugPrint('Displaying past trips, count: ${state.pastTrips.length}');
+          //debugPrint('Displaying past trips, count: ${state.pastTrips.length}');
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: state.pastTrips.length,
             itemBuilder: (context, index) {
               final trip = state.pastTrips[index];
-              debugPrint('Displaying trip ${trip.id} at index $index');
+              //debugPrint('Displaying trip ${trip.id} at index $index');
               return _TripCard(
                 trip: trip,
                 monumentMap: monumentMap,
@@ -127,7 +127,7 @@ class _TripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    debugPrint('Building _TripCard for trip ${trip.id}');
+    //debugPrint('Building _TripCard for trip ${trip.id}');
 
     final startMonument = monumentMap[trip.startMonumentId] ??
         Monument(
@@ -135,7 +135,7 @@ class _TripCard extends StatelessWidget {
           name: 'Unknown Location',
           position: LatLng(0, 0),
         );
-    debugPrint('Start monument: ${startMonument.name}');
+    //debugPrint('Start monument: ${startMonument.name}');
 
     final endMonument = trip.endMonumentId != null
         ? monumentMap[trip.endMonumentId!] ??
@@ -149,12 +149,12 @@ class _TripCard extends StatelessWidget {
             name: 'No End Trip Recorded',
             position: LatLng(0, 0),
           );
-    debugPrint('End monument: ${endMonument.name}');
+    //debugPrint('End monument: ${endMonument.name}');
 
     final monumentsPassed = (trip.monuments ?? [])
         .map((id) => monumentMap[id]?.name ?? 'Unknown Monument')
         .toList();
-    debugPrint('Monuments passed: $monumentsPassed');
+    //debugPrint('Monuments passed: $monumentsPassed');
 
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
@@ -240,7 +240,7 @@ class _TripCard extends StatelessWidget {
     required String value,
   }) {
     final theme = Theme.of(context);
-    debugPrint('Building info row for $label: $value');
+    //debugPrint('Building info row for $label: $value');
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -273,7 +273,7 @@ class _TripCard extends StatelessWidget {
   }
 
   IconData _getVehicleIcon(VehicleType? type) {
-    debugPrint('Getting vehicle icon for type: $type');
+    //debugPrint('Getting vehicle icon for type: $type');
     switch (type) {
       case VehicleType.walk:
         return Icons.directions_walk;
@@ -293,7 +293,7 @@ class _TripCard extends StatelessWidget {
   }
 
   String _getVehicleTypeText(VehicleType? type) {
-    debugPrint('Getting vehicle type text for type: $type');
+    //debugPrint('Getting vehicle type text for type: $type');
     if (type == null) return 'Unknown';
     switch (type) {
       case VehicleType.walk:
@@ -312,7 +312,7 @@ class _TripCard extends StatelessWidget {
   }
 
   String _getPurposeText(TripPurpose? purpose) {
-    debugPrint('Getting purpose text for purpose: $purpose');
+    //debugPrint('Getting purpose text for purpose: $purpose');
     if (purpose == null) return 'Unknown';
     switch (purpose) {
       case TripPurpose.class_:

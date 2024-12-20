@@ -25,7 +25,7 @@ class Trip extends Equatable {
   final DateTime? endTime;
   final String? startMonumentId;
   final String? endMonumentId;
-  final List<TripCheckpoint>? monuments;
+  final List<String>? monuments;
   final List<TripCheckpoint> checkpoints;
   final VehicleType? vehicleType;
   final TripPurpose? purpose;
@@ -54,7 +54,7 @@ class Trip extends Equatable {
     DateTime? endTime,
     String? startMonumentId,
     String? endMonumentId,
-    List<TripCheckpoint>? monuments,
+    List<String>? monuments,
     List<TripCheckpoint>? checkpoints,
     VehicleType? vehicleType,
     TripPurpose? purpose,
@@ -101,9 +101,9 @@ class Trip extends Equatable {
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
       startMonumentId: json['startMonumentId'],
       endMonumentId: json['endMonumentId'],
-      monuments: (json['monumnets'] as List)
-          .map((c) => TripCheckpoint.fromJson(c))
-          .toList(),
+      monuments: (json['monuments'] as List)
+        .map((c) => c as String) // Cast each item to String
+        .toList(),
       checkpoints: (json['checkpoints'] as List)
           .map((c) => TripCheckpoint.fromJson(c))
           .toList(),
@@ -134,14 +134,14 @@ class Trip extends Equatable {
 }
 
 class TripCheckpoint extends Equatable {
-  final String Id;
+  final String id;
   final String? monumentName;
   final DateTime? timestamp;
   final double? lat;
   final double? lng;
 
   const TripCheckpoint({
-    required this.Id,
+    required this.id,
     this.monumentName,
     this.timestamp,
     this.lat,
@@ -150,7 +150,7 @@ class TripCheckpoint extends Equatable {
 
   Map<String, dynamic> toJson() {
     return {
-      'Id': Id,
+      'id': id,
       'monumentName': monumentName,
       'timestamp': timestamp!.toIso8601String(),
       'latitude': lat,
@@ -160,7 +160,7 @@ class TripCheckpoint extends Equatable {
 
   factory TripCheckpoint.fromJson(Map<String, dynamic> json) {
     return TripCheckpoint(
-      Id: json['Id'],
+      id: json['Id'],
       monumentName: json['monumentName'],
       timestamp: DateTime.parse(json['timestamp']),
       lat: json['latitude'],
@@ -169,5 +169,5 @@ class TripCheckpoint extends Equatable {
   }
 
   @override
-  List<Object?> get props => [Id,monumentName, timestamp, lat, lng];
+  List<Object?> get props => [id,monumentName, timestamp, lat, lng];
 } 

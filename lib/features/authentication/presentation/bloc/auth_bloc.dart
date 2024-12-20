@@ -20,13 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SendPhoneNumberVerification event,
     Emitter<AuthState> emit,
   ) async {
-    // if(event.phoneNumber=="8949462906"){
-    //    emit(state.copyWith(
-    //     isLoading: false,
-    //     phoneNumber: event.phoneNumber,
-    //   ));
-    //   return;
-    // }
+   
     try {
       emit(state.copyWith(isLoading: true, error: null));
       await _authService.sendOtp(event.phoneNumber);
@@ -47,17 +41,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      // if(event.otp=="123456"){
-      //   emit(state.copyWith(
-      //   isLoading: false,
-      //   isAuthenticated: true,
-      //   userId: "6763f3ba0bb2910e81ce8b0b",
-      // ));
-      // return;
-      // }
+      
       emit(state.copyWith(isLoading: true, error: null));
       final response = await _authService.verifyOtp(
         state.phoneNumber!,
+        event.name,
         event.otp,
       );
       

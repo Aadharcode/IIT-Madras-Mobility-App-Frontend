@@ -10,6 +10,7 @@ import 'trip_event.dart';
 import 'package:http/http.dart' as http;
 import 'trip_state.dart';
 import '../../../authentication/data/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 
@@ -211,8 +212,13 @@ Future<void> _onUpdateTripDetails(
 
   try {
     // Retrieve the token
-    final token ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjNmM2JhMGJiMjkxMGU4MWNlOGIwYiIsImlhdCI6MTczNDY0MDgwOX0.0k94O1CBKsuQT7GI-cbedVD_DjEQUg2IzXcD5XQfTAw";   
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
+    if (token == null) {
+      emit(state.copyWith(error: 'Token not found. Please log in again.'));
+      return;
+    }
     // Prepare the purpose and vehicle type as strings
     String purposeAsString;
     switch (event.purpose) {
@@ -314,11 +320,13 @@ Future<void> _onLoadPastTrips(
 ) async {
   try {
     // Using a hardcoded token for now
-    final token =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjNmM2JhMGJiMjkxMGU4MWNlOGIwYiIsImlhdCI6MTczNDY0MDgwOX0.0k94O1CBKsuQT7GI-cbedVD_DjEQUg2IzXcD5XQfTAw";
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-    print("🚀 Sending request to fetch past trips...");
-
+    if (token == null) {
+      emit(state.copyWith(error: 'Token not found. Please log in again.'));
+      return;
+    }
     final response = await http.get(
       Uri.parse('$baseUrl/trip/user'),
       headers: <String, String>{
@@ -327,29 +335,23 @@ Future<void> _onLoadPastTrips(
       },
     );
 
-    print("📡 Response received. Status: ${response.statusCode}");
-    print("📦 Response body: ${response.body}");
-
     if (response.statusCode == 200) {
-      print("✅ Response status indicates success.");
-
-      // Decode response body
       final tripsJson = jsonDecode(response.body) as List<dynamic>;
-      print("🛠️ Decoded response JSON successfully. Mapping to Trip models...");
 
-      // Debug: Check if tripsJson is not empty
+      // Check if tripsJson is empty
       if (tripsJson.isEmpty) {
-        print("🔍 No past trips found in the response.");
+        emit(state.copyWith(error: 'No past trips found.'));
+        return;
       }
 
       // Map each trip JSON to the Trip model
-      final trips = tripsJson.map((tripMap) {
+      final List<Trip> pastTrips = tripsJson.map((tripMap) {
         final tripData = tripMap as Map<String, dynamic>;
 
-        // Debug: Print each trip's data as it's processed
-        print("🔍 Processing trip data: $tripData");
+        final monuments = (tripData['monuments'] as List<dynamic>)
+            .map((monumentId) => monumentId as String)
+            .toList();
 
-        // Create Trip instance from JSON data
         final trip = Trip(
           id: tripData['_id'] as String,
           userId: tripData['userId'] as String,
@@ -359,11 +361,7 @@ Future<void> _onLoadPastTrips(
               : null,
           startMonumentId: tripData['startMonumentId'] as String?,
           endMonumentId: tripData['endMonumentId'] as String?,
-          monuments: (tripData['monuments'] as List<dynamic>)
-              .map((monumentId) => TripCheckpoint(
-                    Id: monumentId as String,
-                  ))
-              .toList(),
+          monuments: monuments.isEmpty ? null : monuments,
           purpose: TripPurpose.values.firstWhere(
             (e) => e.toString().split('.').last == tripData['purpose'],
           ),
@@ -371,32 +369,22 @@ Future<void> _onLoadPastTrips(
             (e) => e.toString().split('.').last == tripData['mode'],
           ),
         );
-
-        // Debug: Print the created trip
-        print("🔍 Created trip from data: $trip");
-
+        print('check 1');
         return trip;
       }).toList();
-
-      print("🎉 Successfully mapped all trips: $trips");
+        print('check 2');
       emit(state.copyWith(
-        pastTrips: List<Trip>.from(trips), // Ensuring immutability
+        pastTrips: pastTrips,
         error: null,
       ));
-      // Use copyWith to update the state with the new list of past trips
-      print("🟢 Past trips updated in state.");
     } else {
-      print("❗ Received error response. Status: ${response.statusCode}");
       final errorResponse = jsonDecode(response.body) as Map<String, dynamic>;
-      print("❌ Error details: ${errorResponse['message']}");
       emit(state.copyWith(error: errorResponse['message'] as String?));
     }
   } catch (e) {
-    print("🚨 Exception occurred while fetching trips: $e");
     emit(state.copyWith(error: 'Error loading past trips: $e'));
   }
 }
-
 
 
   Future<void> _onCheckLocation(CheckLocation event, Emitter<TripState> emit) async {

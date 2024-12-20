@@ -9,10 +9,7 @@ import 'features/authentication/presentation/bloc/auth_event.dart';
 import 'features/trip_tracking/data/services/location_service.dart';
 import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'features/trip_tracking/data/models/trip.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -121,6 +118,7 @@ class PhoneAuthScreen extends StatefulWidget {
 
 class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final _phoneController = TextEditingController();
+  final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -149,6 +147,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               MaterialPageRoute(
                 builder: (_) => OTPVerificationScreen(
                   phoneNumber: state.phoneNumber!,
+                  name: _nameController.text,
                 ),
               ),
             );
@@ -217,14 +216,14 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Enter your mobile number',
+                            'Enter your mobile number and name',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'We\'ll send you a verification code',
+                            'We\'ll call you with a verification code',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.grey[600],
                             ),
@@ -250,6 +249,23 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                               return null;
                             },
                           ),
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: _nameController,
+                            
+                            style: theme.textTheme.titleMedium,
+                            decoration: const InputDecoration(
+                              labelText: 'Name',
+                              hintText: 'Enter your Name',
+                              prefixIcon: Icon(Icons.phone_android),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your phone number';
+                              }
+                              return null;
+                            },
+                          ),
                           const SizedBox(height: 24),
                           if (state.isLoading)
                             const Center(child: CircularProgressIndicator())
@@ -260,6 +276,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                   context.read<AuthBloc>().add(
                                         SendPhoneNumberVerification(
                                           _phoneController.text,
+                                          _nameController.text,
                                         ),
                                       );
                                 }
