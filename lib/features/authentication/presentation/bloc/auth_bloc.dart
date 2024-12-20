@@ -6,7 +6,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
 
-  AuthBloc({AuthService? authService}) 
+  AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),
         super(const AuthState()) {
     on<SendPhoneNumberVerification>(_onSendPhoneNumberVerification);
@@ -45,7 +45,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         state.phoneNumber!,
         event.otp,
       );
-      
+
       emit(state.copyWith(
         isLoading: false,
         isAuthenticated: true,
@@ -100,4 +100,4 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthState());
   }
-} 
+}

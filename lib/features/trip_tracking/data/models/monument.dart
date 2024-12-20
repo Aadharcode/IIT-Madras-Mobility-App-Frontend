@@ -59,19 +59,33 @@ class Monument extends Equatable {
   List<Object?> get props => [id, name, position, radius, description];
 }
 
-// Sample monuments data (to be replaced with actual data)
-final List<Monument> sampleMonuments = [
-  const Monument(
-    id: 'gate1',
-    name: 'Main Gate',
-    position: LatLng(12.991214, 80.233276),
-    description: 'main gate of IIT Madras'
-  ),
-  const Monument(
-    id: 'gate2',
-    name: 'Krishna Hostel',
-    position: LatLng(12.986681, 80.237733),
-    description: 'Krishna Hostel near nilgiri'
-  ),
-  // Add more monuments as needed
-];
+// Sample monuments data
+List<Monument> sampleMonuments = [];
+
+// Fetch monuments from API and update sampleMonuments
+Future<void> fetchMonuments() async {
+  const url = 'http://192.168.8.101:3000/monument/';
+
+  try {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+
+      // Update sampleMonuments with the fetched data
+      sampleMonuments = data.map((item) {
+        return Monument.fromJson(item);
+      }).toList();
+      print(sampleMonuments);
+      print("Loaded Monuments: ${sampleMonuments.map((m) => m.name).join(", ")}");
+    } else {
+      throw Exception('Failed to load monuments');
+    }
+  } catch (e) {
+    print('Error loading monuments: $e');
+    // Handle error if fetching fails, no fallback for local data since we're not using SharedPreferences
+  }
+}
+
+void main() async {
+  await fetchMonuments(); // Fetch and update sampleMonuments
+}

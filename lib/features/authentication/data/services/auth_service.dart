@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.8.105:3000';
+  static const String baseUrl = 'http://192.168.8.101:3000';
   static const String tokenKey = 'kjbnaeildnflia';
 
   Future<void> sendOtp(String phoneNumber) async {
@@ -44,7 +44,8 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> verifyOtp(String phoneNumber, String otp) async {
+  Future<Map<String, dynamic>> verifyOtp(
+      String phoneNumber, String name, String otp) async {
     try {
       print('🔐 Attempting to verify OTP');
       print('📱 Phone number: $phoneNumber');
@@ -113,9 +114,7 @@ class AuthService {
       print('🔍 Retrieving token from storage');
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(tokenKey);
-      print(token != null
-          ? '✅ Token found: ${token.substring(0, 10)}...'
-          : '⚠️ No token found');
+      print(token != null ? '✅ Token found: ${token}' : '⚠️ No token found');
       return token;
     } catch (e, stackTrace) {
       print('❌ Error retrieving token:');
