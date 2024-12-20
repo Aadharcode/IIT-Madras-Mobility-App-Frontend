@@ -329,13 +329,17 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     Emitter<TripState> emit,
   ) async {
     try {
-      // Get token using AuthService instead of SharedPreferences
+      emit(state.copyWith(isLoading: true));
       final token = await authService.getToken();
 
       if (token == null) {
-        emit(state.copyWith(error: 'Token not found. Please log in again.'));
+        emit(state.copyWith(
+          error: 'Token not found. Please log in again.',
+          isLoading: false,
+        ));
         return;
       }
+
       final response = await http.get(
         Uri.parse('$baseUrl/trip/user'),
         headers: <String, String>{
@@ -344,54 +348,68 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         },
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final tripsJson = jsonDecode(response.body) as List<dynamic>;
 
-        // Check if tripsJson is empty
         if (tripsJson.isEmpty) {
-          emit(state.copyWith(error: 'No past trips found.'));
+          emit(state.copyWith(
+            pastTrips: [],
+            isLoading: false,
+          ));
           return;
         }
 
-        // Map each trip JSON to the Trip model
         final List<Trip> pastTrips = tripsJson.map((tripMap) {
           final tripData = tripMap as Map<String, dynamic>;
 
-          final monuments = (tripData['monuments'] as List<dynamic>)
-              .map((monumentId) => monumentId as String)
-              .toList();
+          // Handle the monuments array which contains ObjectIds from MongoDB
+          List<String> monuments = [];
+          if (tripData['monuments'] != null) {
+            monuments = (tripData['monuments'] as List)
+                .map((monument) => monument.toString())
+                .toList();
+          }
 
-          final trip = Trip(
+          print('Processing trip: $tripData');
+          print('Purpose from API: ${tripData['purpose']}');
+          print('Mode from API: ${tripData['mode']}');
+
+          return Trip(
             id: tripData['_id'] as String,
             userId: tripData['userId'] as String,
             startTime: DateTime.parse(tripData['startTime'] as String),
             endTime: tripData['endTime'] != null
                 ? DateTime.parse(tripData['endTime'] as String)
                 : null,
-            startMonumentId: tripData['startMonumentId'] as String?,
-            endMonumentId: tripData['endMonumentId'] as String?,
+            startMonumentId: tripData['startMonumentId']?.toString(),
+            endMonumentId: tripData['endMonumentId']?.toString(),
             monuments: monuments.isEmpty ? null : monuments,
-            purpose: TripPurpose.values.firstWhere(
-              (e) => e.toString().split('.').last == tripData['purpose'],
-            ),
-            vehicleType: VehicleType.values.firstWhere(
-              (e) => e.toString().split('.').last == tripData['mode'],
-            ),
+            purpose: _parseTripPurpose(tripData['purpose'] as String?),
+            vehicleType: _parseVehicleType(tripData['mode'] as String?),
           );
-          print('check 1');
-          return trip;
         }).toList();
-        print('check 2');
+
         emit(state.copyWith(
           pastTrips: pastTrips,
+          isLoading: false,
           error: null,
         ));
       } else {
         final errorResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        emit(state.copyWith(error: errorResponse['message'] as String?));
+        emit(state.copyWith(
+          error: errorResponse['message'] as String?,
+          isLoading: false,
+        ));
       }
     } catch (e) {
-      emit(state.copyWith(error: 'Error loading past trips: $e'));
+      print('Error in _onLoadPastTrips: $e');
+      emit(state.copyWith(
+        error: 'Error loading past trips: $e',
+        isLoading: false,
+      ));
     }
   }
 
@@ -437,5 +455,47 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     _monumentSubscription?.cancel();
     _locationService.dispose();
     return super.close();
+  }
+
+  TripPurpose _parseTripPurpose(String? purpose) {
+    if (purpose == null) return TripPurpose.class_; // default value
+
+    switch (purpose.toLowerCase()) {
+      case 'class':
+        return TripPurpose.class_;
+      case 'work':
+        return TripPurpose.work;
+      case 'school':
+        return TripPurpose.school;
+      case 'recreation':
+        return TripPurpose.recreation;
+      case 'shopping':
+        return TripPurpose.shopping;
+      case 'food':
+        return TripPurpose.food;
+      default:
+        return TripPurpose.class_; // default value
+    }
+  }
+
+  VehicleType _parseVehicleType(String? mode) {
+    if (mode == null) return VehicleType.walk; // default value
+
+    switch (mode.toLowerCase()) {
+      case 'walk':
+        return VehicleType.walk;
+      case 'cycle':
+        return VehicleType.cycle;
+      case 'twowheeler':
+        return VehicleType.twoWheeler;
+      case 'threewheeler':
+        return VehicleType.threeWheeler;
+      case 'fourwheeler':
+        return VehicleType.fourWheeler;
+      case 'iitmbus':
+        return VehicleType.iitmBus;
+      default:
+        return VehicleType.walk; // default value
+    }
   }
 }

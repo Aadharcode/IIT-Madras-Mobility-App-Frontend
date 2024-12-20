@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../../data/models/trip.dart';
 import '../../data/services/monument_services.dart';
 import '../../data/models/monument.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class TripDetailsForm extends StatefulWidget {
   final Function(VehicleType vehicleType, TripPurpose purpose, int? occupancy,
-      List<Monument> selectedMonuments, Monument? endMonument) onSubmit;
+      List<Monument> selectedMonuments, Monument endMonument) onSubmit;
 
   const TripDetailsForm({
     super.key,
@@ -35,7 +37,8 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
 
   Future<void> _loadMonuments() async {
     try {
-      final monuments = await MonumentService.fetchMonuments(); // Fetching monuments
+      final monuments =
+          await MonumentService.fetchMonuments(); // Fetching monuments
       setState(() {
         _availableMonuments = monuments;
       });
@@ -119,7 +122,7 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                       border: OutlineInputBorder(),
                     ),
                     items: _availableMonuments.map((monument) {
-                      return DropdownMenuItem<Monument>( 
+                      return DropdownMenuItem<Monument>(
                         value: monument,
                         child: Text(monument.name),
                       );
@@ -133,28 +136,6 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                       });
                     },
                   ),
-            const SizedBox(height: 16),
-            // End Monument Dropdown
-            DropdownButtonFormField<Monument>(
-              decoration: const InputDecoration(
-                labelText: 'End Monument',
-                border: OutlineInputBorder(),
-              ),
-              value: _selectedEndMonument,
-              items: _availableMonuments.map((monument) {
-                return DropdownMenuItem<Monument>( 
-                  value: monument,
-                  child: Text(monument.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedEndMonument = value;
-                });
-              },
-              validator: (value) =>
-                  value == null ? 'Please select an end monument' : null,
-            ),
             const SizedBox(height: 16),
             // Display Selected Monuments
             Wrap(
@@ -174,26 +155,49 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Ensure endMonument is not null before submitting
-                  if (_selectedEndMonument == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select an end monument'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    widget.onSubmit(
-                      _selectedVehicleType!,
-                      _selectedPurpose!,
-                      _occupancy,
-                      _selectedMonuments,
-                      _selectedEndMonument,
-                    );
+                    // Get current location
+                    try {
+                      final position = await Geolocator.getCurrentPosition(
+                        desiredAccuracy: LocationAccuracy.high,
+                      );
+                      final currentLocation = LatLng(
+                        position.latitude,
+                        position.longitude,
+                      );
+
+                      // Find nearest monument
+                      final nearestMonument =
+                          await MonumentService.findNearestMonument(
+                              currentLocation);
+
+                      if (nearestMonument == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'You must be near a monument to end the trip'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      widget.onSubmit(
+                        _selectedVehicleType!,
+                        _selectedPurpose!,
+                        _occupancy,
+                        _selectedMonuments,
+                        nearestMonument,
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
                 },
                 child: const Text('Submit'),

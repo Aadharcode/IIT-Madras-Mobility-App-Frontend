@@ -11,7 +11,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'profile_page.dart';
 import 'dart:async';
 import '../../data/services/Monument_services.dart';
-
+import 'package:geolocator/geolocator.dart';
 
 class TripTrackingScreen extends StatefulWidget {
   final String userId;
@@ -37,65 +37,66 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   }
 
   Future<void> _initializeMonuments() async {
-  final MonumentService monumentService = MonumentService();
+    final MonumentService monumentService = MonumentService();
 
-  try {
-    // Fetch the monuments from the service
-    final List<Monument> _monuments = await MonumentService.fetchMonuments();
-    print("monuments");
+    try {
+      // Fetch the monuments from the service
+      final List<Monument> _monuments = await MonumentService.fetchMonuments();
+      print("monuments");
 
-    setState(() {
-      // Add circles and markers for each monument
-      for (final monument in _monuments) {
-        _monumentZones.add(
-          Circle(
-            circleId: CircleId(monument.id),
-            center: monument.position,
-            radius: monument.radius,
-            fillColor: Colors.blue.withOpacity(0.15),
-            strokeColor: Colors.blue.withOpacity(0.5),
-            strokeWidth: 2,
-          ),
-        );
-        _markers.add(
-          Marker(
-            markerId: MarkerId(monument.id),
-            position: monument.position,
-            infoWindow: InfoWindow(
-              title: monument.name,
-              snippet: monument.description ?? 'No description available',
+      setState(() {
+        // Add circles and markers for each monument
+        for (final monument in _monuments) {
+          _monumentZones.add(
+            Circle(
+              circleId: CircleId(monument.id),
+              center: monument.position,
+              radius: monument.radius,
+              fillColor: Colors.blue.withOpacity(0.15),
+              strokeColor: Colors.blue.withOpacity(0.5),
+              strokeWidth: 2,
             ),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-            onTap: () {
-              _showMonumentDescription(context, monument.name, monument.description ?? '');
-            },
-          ),
-        );
-      }
-    });
-  } catch (e) {
-    print("Error initializing monuments: $e");
+          );
+          _markers.add(
+            Marker(
+              markerId: MarkerId(monument.id),
+              position: monument.position,
+              infoWindow: InfoWindow(
+                title: monument.name,
+                snippet: monument.description ?? 'No description available',
+              ),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueAzure),
+              onTap: () {
+                _showMonumentDescription(
+                    context, monument.name, monument.description ?? '');
+              },
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      print("Error initializing monuments: $e");
+    }
   }
-}
 
-void _showMonumentDescription(BuildContext context, String name, String description) {
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(name),
-      content: Text(description),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Close'),
-        ),
-      ],
-    ),
-  );
-}
-
-
+  void _showMonumentDescription(
+      BuildContext context, String name, String description) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(name),
+        content: Text(description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,36 +160,39 @@ void _showMonumentDescription(BuildContext context, String name, String descript
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.error,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: theme.colorScheme.error.withOpacity(0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () =>  Navigator.of(context).push(
-                                                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                                                ),
-                                  customBorder: const CircleBorder(),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(12),
-                                    child: Icon(
-                                      LucideIcons.user, 
-                                      color: Colors.white,
-                                    ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.error,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      theme.colorScheme.error.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfilePage()),
+                                ),
+                                customBorder: const CircleBorder(),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Icon(
+                                    LucideIcons.user,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
-                            ),  
-                            const SizedBox(width: 16),                      
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
@@ -246,7 +250,8 @@ void _showMonumentDescription(BuildContext context, String name, String descript
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: theme.colorScheme.error.withOpacity(0.3),
+                                    color: theme.colorScheme.error
+                                        .withOpacity(0.3),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),
@@ -293,7 +298,8 @@ void _showMonumentDescription(BuildContext context, String name, String descript
               ),
               Positioned(
                 right: 16,
-                bottom: state.isTracking || state.currentTrip != null ? 16 : 100,
+                bottom:
+                    state.isTracking || state.currentTrip != null ? 16 : 100,
                 child: Column(
                   children: [
                     Container(
@@ -396,155 +402,135 @@ void _showMonumentDescription(BuildContext context, String name, String descript
   }
 
   void _showStartDialog(BuildContext context) async {
-  final MonumentService monumentService = MonumentService();
-  final List<Monument> _monuments = await MonumentService.fetchMonuments();
-  Monument? selectedMonument;
-
-  // Ensure _monuments is populated before showing the dialog
-  if (_monuments.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No monuments available.')),
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
     );
-    return; // Exit early if there are no monuments
-  }
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (dialogContext) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Start Trip'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Select your starting point:'),
-                const SizedBox(height: 10),
-                DropdownButton<Monument>(
-                  isExpanded: true,
-                  value: selectedMonument,
-                  hint: const Text('Select a Monument'),
-                  items: _monuments.map((monument) {
-                    return DropdownMenuItem<Monument>(
-                      value: monument,
-                      child: Text(monument.name),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      selectedMonument = newValue;
-                    });
-                  },
-                ),
-              ],
+    try {
+      // Get current location
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final currentLocation = LatLng(position.latitude, position.longitude);
+
+      // Find nearest monument
+      final Monument? nearestMonument =
+          await MonumentService.findNearestMonument(currentLocation);
+
+      // Remove loading indicator
+      Navigator.of(context).pop();
+
+      if (nearestMonument == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You must be near a monument to start a trip'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Show confirmation dialog
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Start Trip'),
+          content: Text('Start trip from ${nearestMonument.name}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedMonument != null) {
-                    context.read<TripBloc>().add(
-                    StartTrip(
-                      userId: widget.userId,
-                      startMonument:
-                      selectedMonument!, // TODO: Detect nearest
-                    ),
-                  );
-                    Navigator.of(dialogContext).pop();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select a starting monument'),
+            ElevatedButton(
+              onPressed: () {
+                context.read<TripBloc>().add(
+                      StartTrip(
+                        userId: widget.userId,
+                        startMonument: nearestMonument,
                       ),
                     );
-                  }
-                },
-                child: const Text('Start'),
-              ),
-            ],
-          );
-        },
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Start'),
+            ),
+          ],
+        ),
       );
-    },
-  );
-}
+    } catch (e) {
+      // Remove loading indicator
+      Navigator.of(context).pop();
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
+  void _showTripEndDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: BlocProvider.value(
+          value: context.read<TripBloc>(),
+          child: BlocConsumer<TripBloc, TripState>(
+            listener: (context, state) {
+              if (state.currentTrip == null && !state.isLoading) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            builder: (context, state) {
+              return AlertDialog(
+                title: const Text('End Trip'),
+                content: state.isLoading
+                    ? const SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : TripDetailsForm(
+                        onSubmit: (vehicleType, purpose, occupancy,
+                            selectedMonuments, endMonument) {
+                          final bloc = context.read<TripBloc>();
 
+                          // Update trip details and end trip
+                          bloc
+                            ..add(UpdateTripDetails(
+                              userId: widget.userId,
+                              vehicleType: vehicleType,
+                              purpose: purpose,
+                              occupancy: occupancy,
+                              selectedMonuments: selectedMonuments,
+                              endMonument: endMonument,
+                            ))
+                            ..add(EndTrip());
 
- void _showTripEndDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (dialogContext) => WillPopScope(
-      onWillPop: () async => false,
-      child: BlocProvider.value(
-        value: context.read<TripBloc>(),
-        child: BlocConsumer<TripBloc, TripState>(
-          listener: (context, state) {
-            if (state.currentTrip == null && !state.isLoading) {
-              Navigator.of(dialogContext).pop();
-            }
-          },
-          builder: (context, state) {
-            return AlertDialog(
-              title: const Text('End Trip'),
-              content: state.isLoading
-                  ? const SizedBox(
-                      height: 100,
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : TripDetailsForm(
-                      onSubmit: (vehicleType, purpose, occupancy, selectedMonuments, endMonument) {
-                        // Check if endMonument is null before submitting
-                        if (endMonument == null) {
-                          // Show an error message if endMonument is null
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('End monument cannot be null!'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          print('endMonument was empty');
-                          return; // Don't proceed with submission if endMonument is null
-                        }
-
-                        final bloc = context.read<TripBloc>();
-
-                        // Update trip details and end trip
-                        bloc
-                          ..add(UpdateTripDetails(
-                            userId: widget.userId,
-                            vehicleType: vehicleType,
-                            purpose: purpose,
-                            occupancy: occupancy,
-                            selectedMonuments: selectedMonuments,
-                            endMonument: endMonument,
-                          ))
-                          ..add(EndTrip());
-
-                        Navigator.of(dialogContext).pop();
-                      },
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                actions: [
+                  if (!state.isLoading)
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancel'),
                     ),
-              actions: [
-                if (!state.isLoading)
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Cancel'),
-                  ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-}
-  
+    );
+  }
+
   @override
   void dispose() {
     _mapController?.dispose();

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/monument.dart';
 
 class MonumentService {
@@ -21,7 +22,7 @@ class MonumentService {
       if (response.statusCode == 200) {
         print('✅ Successfully fetched data from the API!');
         final List<dynamic> data = json.decode(response.body);
-        print('📊 Decoded API response: $data');
+        // print('📊 Decoded API response: $data');
 
         print('💾 Saving fetched data to local storage...');
         await prefs.setString(_monumentKey, json.encode(data));
@@ -36,7 +37,8 @@ class MonumentService {
               item['lat'] as double,
               item['long'] as double,
             ),
-            radius: 50.0, // Use a default radius since the backend doesn't provide one
+            radius:
+                50.0, // Use a default radius since the backend doesn't provide one
             description: null, // Optional field not provided by the backend
           );
         }).toList();
@@ -72,5 +74,45 @@ class MonumentService {
       print('❌ No local data found. Throwing exception...');
       throw Exception('Failed to fetch monuments and no local data found');
     }
+  }
+
+  static Future<Monument?> findNearestMonument(LatLng currentLocation) async {
+    try {
+      final monuments = await fetchMonuments();
+      if (monuments.isEmpty) return null;
+
+      Monument nearestMonument = monuments.first;
+      double shortestDistance = _calculateDistance(
+        currentLocation,
+        nearestMonument.position,
+      );
+
+      for (var monument in monuments) {
+        double distance =
+            _calculateDistance(currentLocation, monument.position);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          nearestMonument = monument;
+        }
+      }
+
+      // Only return the monument if we're within its radius
+      if (shortestDistance <= nearestMonument.radius) {
+        return nearestMonument;
+      }
+      return null;
+    } catch (e) {
+      print('Error finding nearest monument: $e');
+      return null;
+    }
+  }
+
+  static double _calculateDistance(LatLng point1, LatLng point2) {
+    return Geolocator.distanceBetween(
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
+    );
   }
 }
