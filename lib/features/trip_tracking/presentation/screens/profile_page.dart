@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
 import '../../../authentication/presentation/bloc/auth_state.dart';
-import '../../../authentication/presentation/screens/user_profile_screen.dart';
+import '../../../../main.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -108,7 +108,7 @@ class ProfilePage extends StatelessWidget {
                     context.read<AuthBloc>().add(const LogoutEvent());
                      Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const UserProfileScreen(),
+                        builder: (context) => const MyApp(),
                       ),
                      );
                   },

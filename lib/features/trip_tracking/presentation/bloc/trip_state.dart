@@ -13,6 +13,7 @@ class TripState extends Equatable {
   final Set<Marker> markers;
   final Set<Circle> monumentZones;
   final bool isActive;
+  final String counter;
 
   const TripState({
     this.currentTrip,
@@ -24,6 +25,7 @@ class TripState extends Equatable {
     this.markers = const {},
     this.monumentZones = const {},
     this.isActive = false,
+    this.counter = '0',
   });
 
   TripState copyWith({
@@ -36,6 +38,7 @@ class TripState extends Equatable {
     Set<Marker>? markers,
     Set<Circle>? monumentZones,
     bool? isActive,
+    String? counter,
   }) {
     return TripState(
       currentTrip: currentTrip ?? this.currentTrip,
@@ -47,6 +50,7 @@ class TripState extends Equatable {
       markers: markers ?? this.markers,
       monumentZones: monumentZones ?? this.monumentZones,
       isActive: isActive ?? this.isActive,
+      counter: counter ?? this.counter,
     );
   }
 

@@ -15,7 +15,7 @@ class Monument extends Equatable {
     required this.id,
     required this.name,
     required this.position,
-    this.radius = 50, // default radius of 50 meters
+    this.radius = 50, 
     this.description,
   });
 

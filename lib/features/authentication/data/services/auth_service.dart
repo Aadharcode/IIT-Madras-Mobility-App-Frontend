@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+export 'auth_service.dart';
 
 class AuthService {
   static const String baseUrl = 'http://192.168.8.101:3000';
@@ -54,6 +55,7 @@ class AuthService {
 
       final body = json.encode({
         'number': int.parse(phoneNumber),
+        'name': name,
         'otp': otp,
       });
       print('📦 Request body: $body');
@@ -138,3 +140,4 @@ class AuthService {
     }
   }
 }
+

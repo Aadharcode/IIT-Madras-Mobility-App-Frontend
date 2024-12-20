@@ -7,10 +7,12 @@ import 'user_profile_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String phoneNumber;
+  final String name;
 
   const OTPVerificationScreen({
     super.key,
     required this.phoneNumber,
+    required this.name,
   });
 
   @override
@@ -96,7 +98,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<AuthBloc>().add(
-                                VerifyOTP(_otpController.text),
+                                VerifyOTP(_otpController.text, widget.name),
                               );
                         }
                       },
@@ -110,7 +112,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     onPressed: () {
                       // TODO: Implement resend OTP functionality
                       context.read<AuthBloc>().add(
-                            SendPhoneNumberVerification(widget.phoneNumber),
+                            SendPhoneNumberVerification(widget.phoneNumber, widget.name),
                           );
                     },
                     child: const Text('Resend OTP'),

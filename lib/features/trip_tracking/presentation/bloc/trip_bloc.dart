@@ -7,10 +7,12 @@ import '../../data/models/trip.dart';
 import '../../data/models/monument.dart';
 import '../../data/services/location_service.dart';
 import 'trip_event.dart';
+import 'package:http/http.dart' as http;
 import 'trip_state.dart';
 import '../../../authentication/data/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
 
 class TripBloc extends Bloc<TripEvent, TripState> {
   static const String baseUrl = 'http://192.168.8.101:3000';
@@ -18,6 +20,10 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   final LocationService _locationService;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<Monument>? _monumentSubscription;
+  Timer? _locationTimer;
+  Position? _previousPosition;
+  List<Map<String, dynamic>> _availableMonuments = [];
+  int _stationaryCounter = 0;
   final _uuid = const Uuid();
 
   TripBloc({required LocationService locationService})
@@ -26,13 +32,15 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<StartTrip>(_onStartTrip);
     on<EndTrip>(_onEndTrip);
     on<UpdateTripDetails>(_onUpdateTripDetails);
-    on<MonumentReached>(_onMonumentReached);
-    on<LocationUpdated>(_onLocationUpdated);
-    on<IdleTimeout>(_onIdleTimeout);
+    // on<MonumentReached>(_onMonumentReached);
+    // on<LocationUpdated>(_onLocationUpdated);
+    // on<IdleTimeout>(_onIdleTimeout);
     on<LoadPastTrips>(_onLoadPastTrips);
+    on<CheckLocation>(_onCheckLocation);
 
     _initializeLocationTracking();
   }
+  
 
   Future<LatLng?> _getUserLocation() async {
     // Check if location services are enabled
@@ -66,6 +74,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     // Return the location as LatLng
     return LatLng(position.latitude, position.longitude);
   }
+
 
   Future<void> _initializeLocationTracking() async {
     final hasPermission = await _locationService.requestLocationPermission();
@@ -148,6 +157,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     }
   }
 
+
   Future<void> _onEndTrip(
     EndTrip event,
     Emitter<TripState> emit,
@@ -166,12 +176,14 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       // Create the updated trip with the end monument and time
       final endedTrip = currentTrip.copyWith(
         endTime: DateTime.now(),
-        endMonumentId: event.endMonument.id,
         isActive: false,
       );
 
-      // Add a small delay to show loading state
+      // Small delay to show loading state
       await Future.delayed(const Duration(milliseconds: 500));
+
+      // Cancel the location timer
+      _locationTimer?.cancel();
 
       // Reset all trip-related state
       emit(state.copyWith(
@@ -179,9 +191,11 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         isTracking: false,
         isLoading: false,
         error: null,
-        currentLocation: state.currentLocation, 
-        isActive: false
+        currentLocation: state.currentLocation,
+        isActive: false,
       ));
+
+      // Reset the current trip state
       emit(state.copyWith(
         currentTrip: null,
       ));

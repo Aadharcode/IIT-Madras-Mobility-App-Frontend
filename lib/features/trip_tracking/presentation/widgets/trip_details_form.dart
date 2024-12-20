@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../data/models/trip.dart';
+import '../../data/services/monument_services.dart';
+import '../../data/models/monument.dart';
 
 class TripDetailsForm extends StatefulWidget {
-  final Function(VehicleType vehicleType, TripPurpose purpose, int? occupancy)
-      onSubmit;
+  final Function(VehicleType vehicleType, TripPurpose purpose, int? occupancy,
+      List<Monument> selectedMonuments, Monument? endMonument) onSubmit;
 
   const TripDetailsForm({
     super.key,
@@ -15,10 +17,34 @@ class TripDetailsForm extends StatefulWidget {
 }
 
 class _TripDetailsFormState extends State<TripDetailsForm> {
+  final MonumentService monumentService = MonumentService();
   VehicleType? _selectedVehicleType;
   TripPurpose? _selectedPurpose;
   int? _occupancy;
+  List<Monument> _availableMonuments = [];
+  List<Monument> _selectedMonuments = [];
+  Monument? _selectedEndMonument;
+  String? _monumentError;
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMonuments();
+  }
+
+  Future<void> _loadMonuments() async {
+    try {
+      final monuments = await MonumentService.fetchMonuments(); // Fetching monuments
+      setState(() {
+        _availableMonuments = monuments;
+      });
+    } catch (e) {
+      setState(() {
+        _monumentError = 'Error fetching monuments: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +60,7 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
+            // Mode of Transport Dropdown
             DropdownButtonFormField<VehicleType>(
               value: _selectedVehicleType,
               decoration: const InputDecoration(
@@ -55,14 +82,11 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                   }
                 });
               },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select a mode of transport';
-                }
-                return null;
-              },
+              validator: (value) =>
+                  value == null ? 'Please select a mode of transport' : null,
             ),
             const SizedBox(height: 16),
+            // Trip Purpose Dropdown
             DropdownButtonFormField<TripPurpose>(
               value: _selectedPurpose,
               decoration: const InputDecoration(
@@ -80,55 +104,95 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                   _selectedPurpose = value;
                 });
               },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select a trip purpose';
-                }
-                return null;
-              },
+              validator: (value) =>
+                  value == null ? 'Please select a trip purpose' : null,
             ),
-            if (_selectedVehicleType == VehicleType.twoWheeler ||
-                _selectedVehicleType == VehicleType.fourWheeler) ...[
-              const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                value: _occupancy,
-                decoration: const InputDecoration(
-                  labelText: 'Number of Passengers',
-                  border: OutlineInputBorder(),
-                ),
-                items: List.generate(
-                  _selectedVehicleType == VehicleType.twoWheeler ? 2 : 4,
-                  (index) => DropdownMenuItem(
-                    value: index + 1,
-                    child: Text('${index + 1}'),
+            const SizedBox(height: 16),
+            // Monuments Passed Dropdown
+            _availableMonuments.isEmpty
+                ? _monumentError != null
+                    ? Text('Error: $_monumentError')
+                    : const CircularProgressIndicator()
+                : DropdownButtonFormField<Monument>(
+                    decoration: const InputDecoration(
+                      labelText: 'Monuments Passed',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _availableMonuments.map((monument) {
+                      return DropdownMenuItem<Monument>( 
+                        value: monument,
+                        child: Text(monument.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        if (value != null &&
+                            !_selectedMonuments.contains(value)) {
+                          _selectedMonuments.add(value);
+                        }
+                      });
+                    },
                   ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _occupancy = value;
-                  });
-                },
-                validator: (value) {
-                  if (_selectedVehicleType == VehicleType.twoWheeler ||
-                      _selectedVehicleType == VehicleType.fourWheeler) {
-                    if (value == null) {
-                      return 'Please select number of passengers';
-                    }
-                  }
-                  return null;
-                },
+            const SizedBox(height: 16),
+            // End Monument Dropdown
+            DropdownButtonFormField<Monument>(
+              decoration: const InputDecoration(
+                labelText: 'End Monument',
+                border: OutlineInputBorder(),
               ),
-            ],
+              value: _selectedEndMonument,
+              items: _availableMonuments.map((monument) {
+                return DropdownMenuItem<Monument>( 
+                  value: monument,
+                  child: Text(monument.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedEndMonument = value;
+                });
+              },
+              validator: (value) =>
+                  value == null ? 'Please select an end monument' : null,
+            ),
+            const SizedBox(height: 16),
+            // Display Selected Monuments
+            Wrap(
+              children: _selectedMonuments.map((monument) {
+                return Chip(
+                  label: Text(monument.name),
+                  onDeleted: () {
+                    setState(() {
+                      _selectedMonuments.remove(monument);
+                    });
+                  },
+                );
+              }).toList(),
+            ),
             const SizedBox(height: 24),
+            // Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  // Ensure endMonument is not null before submitting
+                  if (_selectedEndMonument == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select an end monument'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
                   if (_formKey.currentState!.validate()) {
                     widget.onSubmit(
                       _selectedVehicleType!,
                       _selectedPurpose!,
                       _occupancy,
+                      _selectedMonuments,
+                      _selectedEndMonument,
                     );
                   }
                 },
@@ -174,4 +238,4 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
         return 'Food';
     }
   }
-} 
+}
