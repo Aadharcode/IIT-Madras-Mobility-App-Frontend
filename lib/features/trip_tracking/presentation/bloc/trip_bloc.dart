@@ -10,9 +10,7 @@ import 'trip_event.dart';
 import 'package:http/http.dart' as http;
 import 'trip_state.dart';
 import '../../../authentication/data/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
 
 class TripBloc extends Bloc<TripEvent, TripState> {
   static const String baseUrl = 'http://192.168.8.101:3000';
@@ -40,7 +38,6 @@ class TripBloc extends Bloc<TripEvent, TripState> {
 
     _initializeLocationTracking();
   }
-  
 
   Future<LatLng?> _getUserLocation() async {
     // Check if location services are enabled
@@ -74,7 +71,6 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     // Return the location as LatLng
     return LatLng(position.latitude, position.longitude);
   }
-
 
   Future<void> _initializeLocationTracking() async {
     final hasPermission = await _locationService.requestLocationPermission();
@@ -157,7 +153,6 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     }
   }
 
-
   Future<void> _onEndTrip(
     EndTrip event,
     Emitter<TripState> emit,
@@ -227,15 +222,15 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     // Debugging endMonumentId
     print('🔍 Current endMonumentId: ${event.endMonument.id}');
 
-  try {
-    // Retrieve the token
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    try {
+      // Get token using AuthService instead of SharedPreferences
+      final token = await authService.getToken();
 
       if (token == null) {
         emit(state.copyWith(error: 'Token not found. Please log in again.'));
         return;
       }
+
       // Prepare the purpose and vehicle type as strings
       String purposeAsString;
       switch (event.purpose) {
@@ -334,9 +329,8 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     Emitter<TripState> emit,
   ) async {
     try {
-      // Using a hardcoded token for now
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      // Get token using AuthService instead of SharedPreferences
+      final token = await authService.getToken();
 
       if (token == null) {
         emit(state.copyWith(error: 'Token not found. Please log in again.'));

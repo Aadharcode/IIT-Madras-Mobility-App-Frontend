@@ -3,6 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 export 'auth_service.dart';
 
+class AuthException implements Exception {
+  final String message;
+  final String? code;
+
+  AuthException(this.message, {this.code});
+
+  @override
+  String toString() => message;
+}
+
 class AuthService {
   static const String baseUrl = 'http://192.168.8.101:3000';
   static const String tokenKey = 'kjbnaeildnflia';
@@ -27,8 +37,7 @@ class AuthService {
       if (response.statusCode != 200) {
         final errorMsg =
             json.decode(response.body)['msg'] ?? 'Failed to send OTP';
-        print('❌ API Error: $errorMsg');
-        throw Exception(errorMsg);
+        throw AuthException(errorMsg, code: response.statusCode.toString());
       }
 
       print('✅ OTP sent successfully');
@@ -72,8 +81,7 @@ class AuthService {
       if (response.statusCode != 200) {
         final errorMsg =
             json.decode(response.body)['msg'] ?? 'Failed to verify OTP';
-        print('❌ API Error: $errorMsg');
-        throw Exception(errorMsg);
+        throw AuthException(errorMsg, code: response.statusCode.toString());
       }
 
       final data = json.decode(response.body);
@@ -140,4 +148,3 @@ class AuthService {
     }
   }
 }
-

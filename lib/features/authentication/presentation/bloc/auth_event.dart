@@ -21,6 +21,7 @@ class SendPhoneNumberVerification extends AuthEvent {
 class LogoutEvent extends AuthEvent {
   const LogoutEvent();
 }
+
 class VerifyOTP extends AuthEvent {
   final String otp;
   final String name;
@@ -44,4 +45,8 @@ class UpdateUserProfile extends AuthEvent {
   List<Object> get props => [userCategory, residenceType];
 }
 
-class SignOut extends AuthEvent {} 
+class SignOut extends AuthEvent {}
+
+class CheckAuthStatus extends AuthEvent {
+  const CheckAuthStatus();
+}

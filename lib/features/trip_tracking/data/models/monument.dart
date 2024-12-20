@@ -15,7 +15,7 @@ class Monument extends Equatable {
     required this.id,
     required this.name,
     required this.position,
-    this.radius = 50, 
+    this.radius = 50,
     this.description,
   });
 
@@ -78,7 +78,8 @@ Future<void> fetchMonuments() async {
         return Monument.fromJson(item);
       }).toList();
       print(sampleMonuments);
-      print("Loaded Monuments: ${sampleMonuments.map((m) => m.name).join(", ")}");
+      print(
+          "Loaded Monuments: ${sampleMonuments.map((m) => m.name).join(", ")}");
     } else {
       throw Exception('Failed to load monuments');
     }

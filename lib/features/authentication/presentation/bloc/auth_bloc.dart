@@ -6,7 +6,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
 
-  AuthBloc({AuthService? authService}) 
+  AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),
         super(const AuthState()) {
     on<SendPhoneNumberVerification>(_onSendPhoneNumberVerification);
@@ -14,13 +14,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<UpdateUserProfile>(_onUpdateUserProfile);
     on<SignOut>(_onSignOut);
     on<LogoutEvent>(_onLogoutEvent);
+    on<CheckAuthStatus>(_onCheckAuthStatus);
   }
 
   Future<void> _onSendPhoneNumberVerification(
     SendPhoneNumberVerification event,
     Emitter<AuthState> emit,
   ) async {
-   
     try {
       emit(state.copyWith(isLoading: true, error: null));
       await _authService.sendOtp(event.phoneNumber);
@@ -41,14 +41,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      
       emit(state.copyWith(isLoading: true, error: null));
       final response = await _authService.verifyOtp(
         state.phoneNumber!,
         event.name,
         event.otp,
       );
-      
+
       emit(state.copyWith(
         isLoading: false,
         isAuthenticated: true,
@@ -103,4 +102,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthState());
   }
-} 
+
+  Future<void> _onCheckAuthStatus(
+    CheckAuthStatus event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final token = await _authService.getToken();
+      emit(state.copyWith(
+        isAuthenticated: token != null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(error: e.toString()));
+    }
+  }
+}
