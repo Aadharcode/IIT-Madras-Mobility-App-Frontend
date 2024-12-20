@@ -9,6 +9,10 @@ import 'features/authentication/presentation/bloc/auth_event.dart';
 import 'features/trip_tracking/data/services/location_service.dart';
 import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'features/trip_tracking/data/models/trip.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,6 +20,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +263,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                         ),
                                       );
                                 }
+                                
                               },
                               child: const Text('Get OTP'),
                             ),

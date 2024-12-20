@@ -23,8 +23,9 @@ class Trip extends Equatable {
   final String userId;
   final DateTime startTime;
   final DateTime? endTime;
-  final String startMonumentId;
+  final String? startMonumentId;
   final String? endMonumentId;
+  final List<TripCheckpoint>? monuments;
   final List<TripCheckpoint> checkpoints;
   final VehicleType? vehicleType;
   final TripPurpose? purpose;
@@ -36,7 +37,8 @@ class Trip extends Equatable {
     required this.userId,
     required this.startTime,
     this.endTime,
-    required this.startMonumentId,
+    this.startMonumentId,
+    this.monuments,
     this.endMonumentId,
     this.checkpoints = const [],
     this.vehicleType,
@@ -52,6 +54,7 @@ class Trip extends Equatable {
     DateTime? endTime,
     String? startMonumentId,
     String? endMonumentId,
+    List<TripCheckpoint>? monuments,
     List<TripCheckpoint>? checkpoints,
     VehicleType? vehicleType,
     TripPurpose? purpose,
@@ -65,6 +68,7 @@ class Trip extends Equatable {
       endTime: endTime ?? this.endTime,
       startMonumentId: startMonumentId ?? this.startMonumentId,
       endMonumentId: endMonumentId ?? this.endMonumentId,
+      monuments: monuments ?? this.monuments,
       checkpoints: checkpoints ?? this.checkpoints,
       vehicleType: vehicleType ?? this.vehicleType,
       purpose: purpose ?? this.purpose,
@@ -97,6 +101,9 @@ class Trip extends Equatable {
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
       startMonumentId: json['startMonumentId'],
       endMonumentId: json['endMonumentId'],
+      monuments: (json['monumnets'] as List)
+          .map((c) => TripCheckpoint.fromJson(c))
+          .toList(),
       checkpoints: (json['checkpoints'] as List)
           .map((c) => TripCheckpoint.fromJson(c))
           .toList(),
@@ -127,36 +134,40 @@ class Trip extends Equatable {
 }
 
 class TripCheckpoint extends Equatable {
-  final String monumentId;
-  final DateTime timestamp;
-  final double latitude;
-  final double longitude;
+  final String Id;
+  final String? monumentName;
+  final DateTime? timestamp;
+  final double? lat;
+  final double? lng;
 
   const TripCheckpoint({
-    required this.monumentId,
-    required this.timestamp,
-    required this.latitude,
-    required this.longitude,
+    required this.Id,
+    this.monumentName,
+    this.timestamp,
+    this.lat,
+    this.lng,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'monumentId': monumentId,
-      'timestamp': timestamp.toIso8601String(),
-      'latitude': latitude,
-      'longitude': longitude,
+      'Id': Id,
+      'monumentName': monumentName,
+      'timestamp': timestamp!.toIso8601String(),
+      'latitude': lat,
+      'longitude': lng,
     };
   }
 
   factory TripCheckpoint.fromJson(Map<String, dynamic> json) {
     return TripCheckpoint(
-      monumentId: json['monumentId'],
+      Id: json['Id'],
+      monumentName: json['monumentName'],
       timestamp: DateTime.parse(json['timestamp']),
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      lat: json['latitude'],
+      lng: json['longitude'],
     );
   }
 
   @override
-  List<Object?> get props => [monumentId, timestamp, latitude, longitude];
+  List<Object?> get props => [Id,monumentName, timestamp, lat, lng];
 } 

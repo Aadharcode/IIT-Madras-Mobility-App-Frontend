@@ -24,27 +24,31 @@ class StartTrip extends TripEvent {
 }
 
 class EndTrip extends TripEvent {
-  final Monument endMonument;
 
-  const EndTrip({required this.endMonument});
 
   @override
-  List<Object> get props => [endMonument];
+  List<Object> get props => [];
 }
 
 class UpdateTripDetails extends TripEvent {
   final VehicleType vehicleType;
   final TripPurpose purpose;
   final int? occupancy;
+  final List<Monument>? selectedMonuments;
+  final String userId;
+  final Monument endMonument;
 
   const UpdateTripDetails({
     required this.vehicleType,
     required this.purpose,
     this.occupancy,
+    this.selectedMonuments,
+    required this.userId,
+    required this.endMonument,
   });
 
   @override
-  List<Object?> get props => [vehicleType, purpose, occupancy];
+  List<Object?> get props => [vehicleType, purpose, occupancy, selectedMonuments];
 }
 
 class MonumentReached extends TripEvent {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../data/models/monument.dart';
 import '../bloc/trip_bloc.dart';
 import '../bloc/trip_event.dart';
@@ -10,7 +9,8 @@ import '../widgets/trip_details_form.dart';
 import 'trip_history_screen.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'profile_page.dart';
-
+import 'dart:async';
+import '../../data/services/Monument_services.dart';
 
 
 class TripTrackingScreen extends StatefulWidget {
@@ -36,52 +36,49 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     _initializeMonuments();
   }
 
+  Future<void> _initializeMonuments() async {
+  final MonumentService monumentService = MonumentService();
 
-  void _initializeMonuments() {
-  for (final monument in sampleMonuments) {
-    _monumentZones.add(
-      Circle(
-        circleId: CircleId(monument.id),
-        center: monument.position,
-        radius: monument.radius,
-        fillColor: Colors.blue.withOpacity(0.15),
-        strokeColor: Colors.blue.withOpacity(0.5),
-        strokeWidth: 2,
-      ),
-    );
-    _markers.add(
-      Marker(
-        markerId: MarkerId(monument.id),
-        position: monument.position,
-        infoWindow: InfoWindow(
-          title: monument.name, 
-        ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        onTap: () {
-          _showMonumentDescription(context,monument.name, monument.description!);
-        },
-      ),
-    );
-    child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              color: Colors.black.withOpacity(0.7),
-              child: Text(
-                monument.name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+  try {
+    // Fetch the monuments from the service
+    final List<Monument> _monuments = await MonumentService.fetchMonuments();
+    print("monuments");
+
+    setState(() {
+      // Add circles and markers for each monument
+      for (final monument in _monuments) {
+        _monumentZones.add(
+          Circle(
+            circleId: CircleId(monument.id),
+            center: monument.position,
+            radius: monument.radius,
+            fillColor: Colors.blue.withOpacity(0.15),
+            strokeColor: Colors.blue.withOpacity(0.5),
+            strokeWidth: 2,
           ),
-        ],
-    );
+        );
+        _markers.add(
+          Marker(
+            markerId: MarkerId(monument.id),
+            position: monument.position,
+            infoWindow: InfoWindow(
+              title: monument.name,
+              snippet: monument.description ?? 'No description available',
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+            onTap: () {
+              _showMonumentDescription(context, monument.name, monument.description ?? '');
+            },
+          ),
+        );
+      }
+    });
+  } catch (e) {
+    print("Error initializing monuments: $e");
   }
 }
 
-void _showMonumentDescription(BuildContext context,String name, String description) {
+void _showMonumentDescription(BuildContext context, String name, String description) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -281,7 +278,7 @@ void _showMonumentDescription(BuildContext context,String name, String descripti
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: ElevatedButton.icon(
-                          onPressed: () => _showTripStartDialog(context),
+                          onPressed: () => _showStartDialog(context),
                           icon: const Icon(Icons.play_arrow_rounded),
                           label: const Text('Start Trip'),
                           style: ElevatedButton.styleFrom(
@@ -398,96 +395,155 @@ void _showMonumentDescription(BuildContext context,String name, String descripti
     );
   }
 
-  void _showTripStartDialog(BuildContext context) {
+  void _showStartDialog(BuildContext context) async {
+  final MonumentService monumentService = MonumentService();
+  final List<Monument> _monuments = await MonumentService.fetchMonuments();
+  Monument? selectedMonument;
+
+  // Ensure _monuments is populated before showing the dialog
+  if (_monuments.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No monuments available.')),
+    );
+    return; // Exit early if there are no monuments
+  }
+
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Start Trip'),
-      content: const Text('Are you ready to start tracking your trip?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            context.read<TripBloc>().add(
-                  StartTrip(
-                    userId: widget.userId,
-                    startMonument:
-                        sampleMonuments.first, // TODO: Detect nearest
-                  ),
-                );
-
-            // Start location checking
-            final locationChecker = LocationChecker();
-            locationChecker.startLocationCheck();
-
-            Navigator.of(dialogContext).pop();
-          },
-          child: const Text('Start'),
-        ),
-      ],
-    ),
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Start Trip'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Select your starting point:'),
+                const SizedBox(height: 10),
+                DropdownButton<Monument>(
+                  isExpanded: true,
+                  value: selectedMonument,
+                  hint: const Text('Select a Monument'),
+                  items: _monuments.map((monument) {
+                    return DropdownMenuItem<Monument>(
+                      value: monument,
+                      child: Text(monument.name),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedMonument = newValue;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (selectedMonument != null) {
+                    context.read<TripBloc>().add(
+                    StartTrip(
+                      userId: widget.userId,
+                      startMonument:
+                      selectedMonument!, // TODO: Detect nearest
+                    ),
+                  );
+                    Navigator.of(dialogContext).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a starting monument'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Start'),
+              ),
+            ],
+          );
+        },
+      );
+    },
   );
 }
 
 
-  void _showTripEndDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => WillPopScope(
-        onWillPop: () async => false,
-        child: BlocProvider.value(
-          value: context.read<TripBloc>(),
-          child: BlocConsumer<TripBloc, TripState>(
-            listener: (context, state) {
-              if (state.currentTrip == null && !state.isLoading) {
-                Navigator.of(dialogContext).pop();
-              }
-            },
-            builder: (context, state) {
-              return AlertDialog(
-                title: const Text('End Trip'),
-                content: state.isLoading
-                    ? const SizedBox(
-                        height: 100,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    : TripDetailsForm(
-                        onSubmit: (vehicleType, purpose, occupancy) {
-                          final bloc = context.read<TripBloc>();
 
-                          // Update trip details and end trip
-                          bloc
-                            ..add(UpdateTripDetails(
-                              vehicleType: vehicleType,
-                              purpose: purpose,
-                              occupancy: occupancy,
-                            ))
-                            ..add(EndTrip(
-                              endMonument:
-                                  sampleMonuments.last, // TODO: Detect nearest
-                            ));
-                            Navigator.of(dialogContext).pop();
-                        },
-                      ),
-                actions: [
-                  if (!state.isLoading)
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('Cancel'),
+
+ void _showTripEndDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => WillPopScope(
+      onWillPop: () async => false,
+      child: BlocProvider.value(
+        value: context.read<TripBloc>(),
+        child: BlocConsumer<TripBloc, TripState>(
+          listener: (context, state) {
+            if (state.currentTrip == null && !state.isLoading) {
+              Navigator.of(dialogContext).pop();
+            }
+          },
+          builder: (context, state) {
+            return AlertDialog(
+              title: const Text('End Trip'),
+              content: state.isLoading
+                  ? const SizedBox(
+                      height: 100,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : TripDetailsForm(
+                      onSubmit: (vehicleType, purpose, occupancy, selectedMonuments, endMonument) {
+                        // Check if endMonument is null before submitting
+                        if (endMonument == null) {
+                          // Show an error message if endMonument is null
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('End monument cannot be null!'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          print('endMonument was empty');
+                          return; // Don't proceed with submission if endMonument is null
+                        }
+
+                        final bloc = context.read<TripBloc>();
+
+                        // Update trip details and end trip
+                        bloc
+                          ..add(UpdateTripDetails(
+                            userId: widget.userId,
+                            vehicleType: vehicleType,
+                            purpose: purpose,
+                            occupancy: occupancy,
+                            selectedMonuments: selectedMonuments,
+                            endMonument: endMonument,
+                          ))
+                          ..add(EndTrip());
+
+                        Navigator.of(dialogContext).pop();
+                      },
                     ),
-                ],
-              );
-            },
-          ),
+              actions: [
+                if (!state.isLoading)
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+              ],
+            );
+          },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
   
   @override
   void dispose() {

@@ -7,14 +7,21 @@ import '../../data/models/trip.dart';
 import '../../data/models/monument.dart';
 import '../../data/services/location_service.dart';
 import 'trip_event.dart';
+import 'package:http/http.dart' as http;
 import 'trip_state.dart';
+import '../../../authentication/data/services/auth_service.dart';
+import 'dart:convert';
+
 
 class TripBloc extends Bloc<TripEvent, TripState> {
+  static const String baseUrl = 'http://192.168.162.250:3000';
+  final authService = AuthService();
   final LocationService _locationService;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<Monument>? _monumentSubscription;
   Timer? _locationTimer;
   Position? _previousPosition;
+  List<Map<String, dynamic>> _availableMonuments = [];
   int _stationaryCounter = 0;
   final _uuid = const Uuid();
 
@@ -24,16 +31,49 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<StartTrip>(_onStartTrip);
     on<EndTrip>(_onEndTrip);
     on<UpdateTripDetails>(_onUpdateTripDetails);
-    on<MonumentReached>(_onMonumentReached);
-    on<LocationUpdated>(_onLocationUpdated);
-    on<IdleTimeout>(_onIdleTimeout);
+    // on<MonumentReached>(_onMonumentReached);
+    // on<LocationUpdated>(_onLocationUpdated);
+    // on<IdleTimeout>(_onIdleTimeout);
     on<LoadPastTrips>(_onLoadPastTrips);
     on<CheckLocation>(_onCheckLocation);
 
     _initializeLocationTracking();
   }
-
   
+
+  Future<LatLng?> _getUserLocation() async {
+    // Check if location services are enabled
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, return null or handle accordingly
+      return null;
+    }
+
+    // Request permission to access location
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      // Request permission if not granted yet
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Location permission denied, return null or handle accordingly
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Location permission is permanently denied, return null or handle accordingly
+      return null;
+    }
+
+    // Fetch the current position (latitude and longitude)
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high, // Set the desired accuracy
+    );
+
+    // Return the location as LatLng
+    return LatLng(position.latitude, position.longitude);
+  }
+
 
   Future<void> _initializeLocationTracking() async {
     final hasPermission = await _locationService.requestLocationPermission();
@@ -70,17 +110,25 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       emit(state.copyWith(error: 'A trip is already in progress'));
       return;
     }
+
+    // Periodically check location
     _locationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       add(CheckLocation());
     });
 
+    // Create the new trip, including startTime, startMonumentId, and userId
     final trip = Trip(
       id: _uuid.v4(),
-      userId: event.userId,
-      startTime: DateTime.now(),
-      startMonumentId: event.startMonument.id,
-      checkpoints: const [],
+      userId: event.userId, // User ID from the event
+      startTime: DateTime.now(), // Store the current time as the start time
+      startMonumentId: event.startMonument.id, // Get the startMonumentId from the event
     );
+
+    // Print details with emojis for better clarity
+    print('🚗 Trip Started! 📍');
+    print('👤 User ID: ${event.userId}');
+    print('🏛️ Start Monument ID: ${event.startMonument.id}');
+    print('⏰ Start Time: ${trip.startTime}');
 
     emit(state.copyWith(
       currentTrip: trip,
@@ -89,6 +137,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       isActive: true,
     ));
   }
+
 
   Future<void> _onEndTrip(
     EndTrip event,
@@ -103,26 +152,31 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       emit(state.copyWith(isLoading: true, error: null));
 
       // Get the current trip with all its details
-      final currentTrips = state.currentTrip!;
+      final currentTrip = state.currentTrip!;
       
-      final endedTrip = currentTrips.copyWith(
+      // Create the updated trip with the end monument and time
+      final endedTrip = currentTrip.copyWith(
         endTime: DateTime.now(),
-        endMonumentId: event.endMonument.id,
         isActive: false,
       );
 
-      // Add a small delay to show loading state
+      // Small delay to show loading state
       await Future.delayed(const Duration(milliseconds: 500));
-       _locationTimer?.cancel();
+
+      // Cancel the location timer
+      _locationTimer?.cancel();
+
       // Reset all trip-related state
       emit(state.copyWith(
         pastTrips: [...state.pastTrips, endedTrip],
         isTracking: false,
         isLoading: false,
         error: null,
-        currentLocation: state.currentLocation, 
-        isActive: false
+        currentLocation: state.currentLocation,
+        isActive: false,
       ));
+
+      // Reset the current trip state
       emit(state.copyWith(
         currentTrip: null,
       ));
@@ -135,87 +189,216 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     }
   }
 
-  Future<void> _onUpdateTripDetails(
-    UpdateTripDetails event,
-    Emitter<TripState> emit,
-  ) async {
-    if (state.currentTrip == null) {
-      emit(state.copyWith(error: 'No active trip to update'));
-      return;
+Future<void> _onUpdateTripDetails(
+  UpdateTripDetails event,
+  Emitter<TripState> emit,
+) async {
+  if (state.currentTrip == null) {
+    emit(state.copyWith(error: 'No active trip to update'));
+    print('❌ No active trip found. Cannot update trip details.');
+    return;
+  }
+
+  // Copy the current trip and update the required fields
+  final updatedTrip = state.currentTrip!.copyWith(
+    vehicleType: event.vehicleType,
+    purpose: event.purpose,
+    occupancy: event.occupancy,
+  );
+
+  // Debugging endMonumentId
+  print('🔍 Current endMonumentId: ${event.endMonument.id}'); 
+
+  try {
+    // Retrieve the token
+    final token ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjNmM2JhMGJiMjkxMGU4MWNlOGIwYiIsImlhdCI6MTczNDY0MDgwOX0.0k94O1CBKsuQT7GI-cbedVD_DjEQUg2IzXcD5XQfTAw";   
+
+    // Prepare the purpose and vehicle type as strings
+    String purposeAsString;
+    switch (event.purpose) {
+      case TripPurpose.class_:
+        purposeAsString = 'class';
+        break;
+      case TripPurpose.work:
+        purposeAsString = 'work';
+        break;
+      case TripPurpose.school:
+        purposeAsString = 'school';
+        break;
+      case TripPurpose.recreation:
+        purposeAsString = 'recreation';
+        break;
+      case TripPurpose.shopping:
+        purposeAsString = 'shopping';
+        break;
+      case TripPurpose.food:
+        purposeAsString = 'food';
+        break;
     }
 
-    final updatedTrip = state.currentTrip!.copyWith(
-      vehicleType: event.vehicleType,
-      purpose: event.purpose,
-      occupancy: event.occupancy,
+    String vehicleTypeAsString;
+    switch (event.vehicleType) {
+      case VehicleType.walk:
+        vehicleTypeAsString = 'walk';
+        break;
+      case VehicleType.cycle:
+        vehicleTypeAsString = 'cycle';
+        break;
+      case VehicleType.twoWheeler:
+        vehicleTypeAsString = 'twoWheeler';
+        break;
+      case VehicleType.threeWheeler:
+        vehicleTypeAsString = 'threeWheeler';
+        break;
+      case VehicleType.fourWheeler:
+        vehicleTypeAsString = 'fourWheeler';
+        break;
+      case VehicleType.iitmBus:
+        vehicleTypeAsString = 'iitmBus';
+        break;
+    }
+
+    // Convert the monument IDs to _id
+    List<Map<String, dynamic>> monumentsJson = [];
+    if (event.selectedMonuments?.isNotEmpty ?? false) {
+      monumentsJson = event.selectedMonuments!.map((monument) {
+        // Convert each monument's id to _id
+        return {
+          '_id': monument.id, // Replace 'id' with '_id'
+        };
+      }).toList();
+    }
+
+    // Debugging endMonumentId before sending the request
+    print('🔍 endMonumentId before sending to server: ${event.endMonument.id}'); 
+
+    // Sending the updated trip details to the server with the token in headers
+    print('🌐 Sending updated trip details to server: $baseUrl/trip/add');
+
+    final body = jsonEncode({
+        'userId': event.userId,
+        'startTime': updatedTrip.startTime.toIso8601String(),
+        'endTime': DateTime.now().toIso8601String(), 
+        'startMonumentId': updatedTrip.startMonumentId,
+        'endMonumentId': event.endMonument.id,  
+        'monuments': monumentsJson, 
+        'purpose': purposeAsString,
+        'mode': vehicleTypeAsString,
+      });
+    print('🌐 $body');
+    final response = await http.post(
+      Uri.parse('$baseUrl/trip/add'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Include the token in the Authorization header
+      },
+      body: body,
     );
 
-    emit(state.copyWith(
-      currentTrip: updatedTrip,
-      error: null,
-    ));
+    print('📥 Response status code: ${response.statusCode}');
+    print('📥 Response body: ${response.body}');
+
+    
+      
+    } 
+  catch (e) {
+    // Handle network or request errors
+    emit(state.copyWith(error: 'Error adding trip: $e'));
+    print('❌ Network or request error: $e');
   }
+}
 
-  Future<void> _onMonumentReached(
-    MonumentReached event,
-    Emitter<TripState> emit,
-  ) async {
-    if (state.currentTrip == null) return;
+Future<void> _onLoadPastTrips(
+  LoadPastTrips event,
+  Emitter<TripState> emit,
+) async {
+  try {
+    // Using a hardcoded token for now
+    final token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjNmM2JhMGJiMjkxMGU4MWNlOGIwYiIsImlhdCI6MTczNDY0MDgwOX0.0k94O1CBKsuQT7GI-cbedVD_DjEQUg2IzXcD5XQfTAw";
 
-    final checkpoint = TripCheckpoint(
-      monumentId: event.monument.id,
-      timestamp: DateTime.now(),
-      latitude: event.location.latitude,
-      longitude: event.location.longitude,
+    print("🚀 Sending request to fetch past trips...");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/trip/user'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
-    final updatedTrip = state.currentTrip!.copyWith(
-      checkpoints: [...state.currentTrip!.checkpoints, checkpoint],
-    );
+    print("📡 Response received. Status: ${response.statusCode}");
+    print("📦 Response body: ${response.body}");
 
-    emit(state.copyWith(
-      currentTrip: updatedTrip,
-      error: null,
-    ));
-  }
+    if (response.statusCode == 200) {
+      print("✅ Response status indicates success.");
 
-  Future<void> _onLocationUpdated(
-    LocationUpdated event,
-    Emitter<TripState> emit,
-  ) async {
-    emit(state.copyWith(
-      currentLocation: event.location,
-      error: null,
-    ));
-  }
+      // Decode response body
+      final tripsJson = jsonDecode(response.body) as List<dynamic>;
+      print("🛠️ Decoded response JSON successfully. Mapping to Trip models...");
 
-  Future<void> _onIdleTimeout(
-    IdleTimeout event,
-    Emitter<TripState> emit,
-  ) async {
-    if (state.currentTrip != null) {
-      // Auto-end the trip if it's been idle for too long
-      final lastCheckpoint = state.currentTrip!.checkpoints.lastOrNull;
-      if (lastCheckpoint != null) {
-        add(EndTrip(
-          endMonument: sampleMonuments.firstWhere(
-            (m) => m.id == lastCheckpoint.monumentId,
-          ),
-        ));
+      // Debug: Check if tripsJson is not empty
+      if (tripsJson.isEmpty) {
+        print("🔍 No past trips found in the response.");
       }
-    }
-  }
 
-  Future<void> _onLoadPastTrips(
-    LoadPastTrips event,
-    Emitter<TripState> emit,
-  ) async {
-    // TODO: Implement loading past trips from storage
-    emit(state.copyWith(
-      pastTrips: [], // Load from storage
-      error: null,
-    ));
+      // Map each trip JSON to the Trip model
+      final trips = tripsJson.map((tripMap) {
+        final tripData = tripMap as Map<String, dynamic>;
+
+        // Debug: Print each trip's data as it's processed
+        print("🔍 Processing trip data: $tripData");
+
+        // Create Trip instance from JSON data
+        final trip = Trip(
+          id: tripData['_id'] as String,
+          userId: tripData['userId'] as String,
+          startTime: DateTime.parse(tripData['startTime'] as String),
+          endTime: tripData['endTime'] != null
+              ? DateTime.parse(tripData['endTime'] as String)
+              : null,
+          startMonumentId: tripData['startMonumentId'] as String?,
+          endMonumentId: tripData['endMonumentId'] as String?,
+          monuments: (tripData['monuments'] as List<dynamic>)
+              .map((monumentId) => TripCheckpoint(
+                    Id: monumentId as String,
+                  ))
+              .toList(),
+          purpose: TripPurpose.values.firstWhere(
+            (e) => e.toString().split('.').last == tripData['purpose'],
+          ),
+          vehicleType: VehicleType.values.firstWhere(
+            (e) => e.toString().split('.').last == tripData['mode'],
+          ),
+        );
+
+        // Debug: Print the created trip
+        print("🔍 Created trip from data: $trip");
+
+        return trip;
+      }).toList();
+
+      print("🎉 Successfully mapped all trips: $trips");
+      emit(state.copyWith(
+        pastTrips: List<Trip>.from(trips), // Ensuring immutability
+        error: null,
+      ));
+      // Use copyWith to update the state with the new list of past trips
+      print("🟢 Past trips updated in state.");
+    } else {
+      print("❗ Received error response. Status: ${response.statusCode}");
+      final errorResponse = jsonDecode(response.body) as Map<String, dynamic>;
+      print("❌ Error details: ${errorResponse['message']}");
+      emit(state.copyWith(error: errorResponse['message'] as String?));
+    }
+  } catch (e) {
+    print("🚨 Exception occurred while fetching trips: $e");
+    emit(state.copyWith(error: 'Error loading past trips: $e'));
   }
+}
+
+
+
   Future<void> _onCheckLocation(CheckLocation event, Emitter<TripState> emit) async {
     try {
       final currentPosition = await Geolocator.getCurrentPosition(
@@ -239,7 +422,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         emit(state.copyWith(counter: _stationaryCounter.toString()));
 
         if (_stationaryCounter >= 5) {
-          add(EndTrip(endMonument: sampleMonuments.last));
+          add(EndTrip());
         }
       } else {
         _stationaryCounter = 0;

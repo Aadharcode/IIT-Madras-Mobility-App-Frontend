@@ -21,6 +21,7 @@ dependencies:
   flutter_svg: ^2.0.9
   flutter_lucide: ^1.6.1
   flutter_timer_countdown: ^1.0.7
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
