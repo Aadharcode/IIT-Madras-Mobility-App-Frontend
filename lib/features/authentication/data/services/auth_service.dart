@@ -14,7 +14,7 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
+  static const String baseUrl = 'http://192.168.162.250:3000';
   static const String tokenKey = 'kjbnaeildnflia';
 
   Future<void> sendOtp(String phoneNumber) async {
@@ -168,6 +168,7 @@ class AuthService {
       }
 
       final data = json.decode(response.body);
+      print(data);
       return data; // Return the user profile data
     } catch (e) {
       throw Exception('Failed to fetch user profile: $e');

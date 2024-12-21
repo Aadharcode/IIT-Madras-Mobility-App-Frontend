@@ -7,7 +7,7 @@ import 'dart:convert';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
-  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
+  static const String baseUrl = 'http://192.168.162.250:3000';
 
   AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),
@@ -86,13 +86,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     try {
       emit(state.copyWith(isLoading: true, error: null));
+      print('🔄 Starting user profile update...');
+      
       String userCategoryString = enumToString(event.userCategory);
       String residenceTypeString = enumToString(event.residenceType);
+      print('📋 User category: $userCategoryString, Residence type: $residenceTypeString');
 
       final token = await _authService.getToken();
       if (token == null) {
+        print('❌ No token found!');
         throw Exception('No token found');
       }
+      print('🔑 Token retrieved successfully.');
 
       final headers = {
         'Content-Type': 'application/json',
@@ -103,18 +108,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         'category': userCategoryString,
         'residenceType': residenceTypeString,
       });
-      print(json.encode(body));
+      print('📤 Request body: ${json.encode(body)}');
 
       final response = await http.post(
         Uri.parse('$baseUrl/user/login/details'),
         headers: headers,
         body: body,
       );
-      print(response.statusCode);
+      print('📬 Response status code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final user = json.decode(response.body);
-        print('Profile update successful: $user');
+        print('✅ Profile update successful: $user');
 
         emit(state.copyWith(
           isLoading: false,
@@ -125,19 +130,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ));
 
         print(
-            'State updated with: ${state.userCategory}, ${state.residenceType}, ${state.isAuthenticated}');
+            '🎉 State updated with: ${state.userCategory}, ${state.residenceType}, ${state.isAuthenticated}');
       } else {
         final error = json.decode(response.body);
+        print('⚠️ Profile update failed with error: ${error['msg']}');
         throw Exception(error['msg']);
       }
     } catch (e) {
-      print(e);
+      print('🚨 Error occurred: $e');
       emit(state.copyWith(
         isLoading: false,
         error: e.toString(),
       ));
     }
   }
+
 
   Future<void> _onSignOut(
     SignOut event,
