@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'auth_state.dart';
 
 abstract class AuthEvent extends Equatable {
@@ -34,10 +35,12 @@ class VerifyOTP extends AuthEvent {
 class UpdateUserProfile extends AuthEvent {
   final UserCategory userCategory;
   final ResidenceType residenceType;
+  final BuildContext context;
 
   const UpdateUserProfile({
     required this.userCategory,
     required this.residenceType,
+     required this.context,
   });
 
   @override

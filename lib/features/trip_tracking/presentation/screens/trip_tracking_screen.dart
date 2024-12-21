@@ -416,29 +416,6 @@ void _showMonumentDescription(BuildContext context, String name, String descript
         builder: (context, setState) {
           return AlertDialog(
             title: const Text('Start Trip'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Select your starting point:'),
-                const SizedBox(height: 10),
-                DropdownButton<Monument>(
-                  isExpanded: true,
-                  value: selectedMonument,
-                  hint: const Text('Select a Monument'),
-                  items: _monuments.map((monument) {
-                    return DropdownMenuItem<Monument>(
-                      value: monument,
-                      child: Text(monument.name),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      selectedMonument = newValue;
-                    });
-                  },
-                ),
-              ],
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
