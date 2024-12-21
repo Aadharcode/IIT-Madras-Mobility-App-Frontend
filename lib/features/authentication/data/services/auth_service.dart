@@ -147,4 +147,30 @@ class AuthService {
       throw Exception('Failed to logout: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getUserProfile() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load user profile');
+      }
+
+      final data = json.decode(response.body);
+      return data; // Return the user profile data
+    } catch (e) {
+      throw Exception('Failed to fetch user profile: $e');
+    }
+  }
 }

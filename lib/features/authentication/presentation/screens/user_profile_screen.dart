@@ -34,6 +34,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               state.isAuthenticated) {
             Navigator.of(context).popUntil((route) => route.isFirst);
           }
+          
         },
         builder: (context, state) {
           return SingleChildScrollView(
@@ -98,6 +99,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       UpdateUserProfile(
                                         userCategory: _selectedCategory!,
                                         residenceType: _selectedResidence!,
+                                        context: context,
                                       ),
                                     );
                               }
