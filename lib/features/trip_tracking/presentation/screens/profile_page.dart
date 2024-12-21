@@ -73,7 +73,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 24),
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                        backgroundColor:
+                            theme.colorScheme.primary.withOpacity(0.1),
                         child: Icon(
                           Icons.person,
                           size: 60,
@@ -99,7 +100,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 Text(
                                   "Category",
-                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: theme.textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -124,11 +126,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 Text(
                                   "Residence Type",
-                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: theme.textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  userProfile?['residenceType'] ?? 'Not Specified',
+                                  userProfile?['residenceType'] ??
+                                      'Not Specified',
                                   style: theme.textTheme.bodyMedium,
                                 ),
                               ],

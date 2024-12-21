@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -32,9 +33,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           if (state.userCategory != null &&
               state.residenceType != null &&
               state.isAuthenticated) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => TripTrackingScreen(
+                  userId: state.userId ?? '',
+                ),
+              ),
+            );
           }
-          
         },
         builder: (context, state) {
           return SingleChildScrollView(

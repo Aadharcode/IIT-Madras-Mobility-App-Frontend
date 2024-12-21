@@ -1,17 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-enum UserCategory {
-  student,
-  faculty,
-  nonFaculty,
-  schoolRelative,
-  others
-}
+enum UserCategory { student, faculty, nonFaculty, schoolRelative, others }
 
-enum ResidenceType {
-  onCampus,
-  offCampus
-}
+enum ResidenceType { onCampus, offCampus }
 
 class AuthState extends Equatable {
   final bool isAuthenticated;
@@ -62,4 +53,4 @@ class AuthState extends Equatable {
         error,
         isLoading,
       ];
-} 
+}
