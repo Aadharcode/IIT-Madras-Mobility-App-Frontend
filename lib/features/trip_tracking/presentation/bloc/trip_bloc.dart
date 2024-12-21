@@ -117,12 +117,12 @@ class TripBloc extends Bloc<TripEvent, TripState> {
 
     try {
       // Periodically check location
-      _locationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
         add(CheckLocation());
       });
 
       // Start monument checking timer
-      _monumentCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _monumentCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         add(CheckNearbyMonument());
       });
 

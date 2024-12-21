@@ -403,11 +403,17 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
 
   void _showStartDialog(BuildContext context) async {
     // Show loading indicator
+    bool isLoading = true;
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
     );
 
@@ -422,8 +428,11 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
       final Monument? nearestMonument =
           await MonumentService.findNearestMonument(currentLocation);
 
+      if (!mounted) return;
+
       // Remove loading indicator
       Navigator.of(context).pop();
+      isLoading = false;
 
       if (nearestMonument == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -462,8 +471,13 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         ),
       );
     } catch (e) {
-      // Remove loading indicator
-      Navigator.of(context).pop();
+      print('Error in _showStartDialog: $e');
+      if (!mounted) return;
+
+      // Ensure loading indicator is removed
+      if (isLoading) {
+        Navigator.of(context).pop();
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

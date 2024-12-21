@@ -14,6 +14,26 @@ class MonumentService {
     print('🛠️ Initializing SharedPreferences...');
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
+    // First check if we have local data
+    final storedData = prefs.getString(_monumentKey);
+    if (storedData != null) {
+      print('📦 Found local data. Using cached monuments...');
+      final List<dynamic> data = json.decode(storedData);
+      return data.map((item) {
+        return Monument(
+          id: item['_id'] as String,
+          name: item['name'] as String,
+          position: LatLng(
+            item['lat'] as double,
+            item['long'] as double,
+          ),
+          radius: 50.0,
+          description: null,
+        );
+      }).toList();
+    }
+
+    // If no local data, fetch from API
     try {
       print('🌐 Sending GET request to $_url...');
       final response = await http.get(Uri.parse(_url));
@@ -100,7 +120,8 @@ class MonumentService {
       if (shortestDistance <= nearestMonument.radius) {
         return nearestMonument;
       }
-      return null;
+      return nearestMonument;
+      //return null;
     } catch (e) {
       print('Error finding nearest monument: $e');
       return null;
