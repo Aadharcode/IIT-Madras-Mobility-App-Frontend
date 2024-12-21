@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'auth_event.dart';
 import 'auth_state.dart';
 import 'dart:convert';
-import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
+
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
@@ -128,8 +128,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         residenceType: user['residenceType'],
         isAuthenticated: true,
         error: null,
-        userId: user['_id'],
-      )); 
+      ));
+
+      
     } else {
       // If the API response is not 200, throw an error
       final error = json.decode(response.body);
