@@ -163,24 +163,48 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 48),
-                    Hero(
-                      tag: 'app_logo',
-                      child: Container(
-                        height: 120,
-                        width: 120,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: SvgPicture.asset(
-                            'assets/images/logo.svg',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                    ),
+                   Row(
+  mainAxisAlignment: MainAxisAlignment.center, // Centers the content in the row
+  children: [
+    Hero(
+      tag: 'app_logo_svg',
+      child: Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SvgPicture.asset(
+            'assets/images/logo.svg',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    ),
+    SizedBox(width: 16), // Adds spacing between the two images
+    Hero(
+      tag: 'app_logo_image',
+      child: Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Image.asset(
+            'assets/images/app_image.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    ),
+  ],
+),
                     const SizedBox(height: 32),
                     Text(
                       'Welcome to IITM Mobility',
