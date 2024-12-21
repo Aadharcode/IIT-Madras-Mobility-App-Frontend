@@ -14,7 +14,7 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.8.101:3000';
+  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
   static const String tokenKey = 'kjbnaeildnflia';
 
   Future<void> sendOtp(String phoneNumber) async {

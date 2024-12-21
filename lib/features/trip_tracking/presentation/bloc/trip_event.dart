@@ -24,8 +24,6 @@ class StartTrip extends TripEvent {
 }
 
 class EndTrip extends TripEvent {
-
-
   @override
   List<Object> get props => [];
 }
@@ -48,7 +46,8 @@ class UpdateTripDetails extends TripEvent {
   });
 
   @override
-  List<Object?> get props => [vehicleType, purpose, occupancy, selectedMonuments];
+  List<Object?> get props =>
+      [vehicleType, purpose, occupancy, selectedMonuments];
 }
 
 class MonumentReached extends TripEvent {
@@ -82,7 +81,7 @@ class LoadPastTrips extends TripEvent {
 
   @override
   List<Object> get props => [userId];
-} 
+}
 
 class TripErrorOccurred extends TripEvent {
   final String error;
@@ -91,6 +90,11 @@ class TripErrorOccurred extends TripEvent {
 }
 
 class CheckLocation extends TripEvent {
+  @override
+  List<Object?> get props => [];
+}
+
+class CheckNearbyMonument extends TripEvent {
   @override
   List<Object?> get props => [];
 }

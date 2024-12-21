@@ -23,31 +23,7 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
   VehicleType? _selectedVehicleType;
   TripPurpose? _selectedPurpose;
   int? _occupancy;
-  List<Monument> _availableMonuments = [];
-  List<Monument> _selectedMonuments = [];
-  Monument? _selectedEndMonument;
-  String? _monumentError;
   final _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMonuments();
-  }
-
-  Future<void> _loadMonuments() async {
-    try {
-      final monuments =
-          await MonumentService.fetchMonuments(); // Fetching monuments
-      setState(() {
-        _availableMonuments = monuments;
-      });
-    } catch (e) {
-      setState(() {
-        _monumentError = 'Error fetching monuments: $e';
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,46 +87,6 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                   value == null ? 'Please select a trip purpose' : null,
             ),
             const SizedBox(height: 16),
-            // Monuments Passed Dropdown
-            _availableMonuments.isEmpty
-                ? _monumentError != null
-                    ? Text('Error: $_monumentError')
-                    : const CircularProgressIndicator()
-                : DropdownButtonFormField<Monument>(
-                    decoration: const InputDecoration(
-                      labelText: 'Monuments Passed',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _availableMonuments.map((monument) {
-                      return DropdownMenuItem<Monument>(
-                        value: monument,
-                        child: Text(monument.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        if (value != null &&
-                            !_selectedMonuments.contains(value)) {
-                          _selectedMonuments.add(value);
-                        }
-                      });
-                    },
-                  ),
-            const SizedBox(height: 16),
-            // Display Selected Monuments
-            Wrap(
-              children: _selectedMonuments.map((monument) {
-                return Chip(
-                  label: Text(monument.name),
-                  onDeleted: () {
-                    setState(() {
-                      _selectedMonuments.remove(monument);
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
             // Submit Button
             SizedBox(
               width: double.infinity,
@@ -187,7 +123,7 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                         _selectedVehicleType!,
                         _selectedPurpose!,
                         _occupancy,
-                        _selectedMonuments,
+                        [],
                         nearestMonument,
                       );
                     } catch (e) {

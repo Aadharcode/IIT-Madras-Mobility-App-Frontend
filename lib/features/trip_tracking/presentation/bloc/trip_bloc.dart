@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:iitm_mobility_app/features/trip_tracking/data/services/Monument_services.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/models/trip.dart';
 import '../../data/models/monument.dart';
@@ -13,7 +14,7 @@ import '../../../authentication/data/services/auth_service.dart';
 import 'dart:convert';
 
 class TripBloc extends Bloc<TripEvent, TripState> {
-  static const String baseUrl = 'http://192.168.8.101:3000';
+  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
   final authService = AuthService();
   final LocationService _locationService;
   StreamSubscription<Position>? _locationSubscription;
@@ -23,6 +24,8 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   List<Map<String, dynamic>> _availableMonuments = [];
   int _stationaryCounter = 0;
   final _uuid = const Uuid();
+  Timer? _monumentCheckTimer;
+  Set<Monument> _monumentsPassed = {};
 
   TripBloc({required LocationService locationService})
       : _locationService = locationService,
@@ -35,6 +38,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     // on<IdleTimeout>(_onIdleTimeout);
     on<LoadPastTrips>(_onLoadPastTrips);
     on<CheckLocation>(_onCheckLocation);
+    on<CheckNearbyMonument>(_onCheckNearbyMonument);
 
     _initializeLocationTracking();
   }
@@ -115,6 +119,11 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       // Periodically check location
       _locationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
         add(CheckLocation());
+      });
+
+      // Start monument checking timer
+      _monumentCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        add(CheckNearbyMonument());
       });
 
       // Create the new trip
@@ -217,6 +226,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       vehicleType: event.vehicleType,
       purpose: event.purpose,
       occupancy: event.occupancy,
+      monuments: _monumentsPassed.map((m) => m.id).toList(),
     );
 
     // Debugging endMonumentId
@@ -276,16 +286,12 @@ class TripBloc extends Bloc<TripEvent, TripState> {
           break;
       }
 
-      // Convert the monument IDs to _id
-      List<Map<String, dynamic>> monumentsJson = [];
-      if (event.selectedMonuments?.isNotEmpty ?? false) {
-        monumentsJson = event.selectedMonuments!.map((monument) {
-          // Convert each monument's id to _id
-          return {
-            '_id': monument.id, // Replace 'id' with '_id'
-          };
-        }).toList();
-      }
+      // Convert the monuments from Set<Monument> to array of IDs
+      final monumentsJson = _monumentsPassed
+          .map((monument) => {
+                '_id': monument.id,
+              })
+          .toList();
 
       // Debugging endMonumentId before sending the request
       print(
@@ -300,7 +306,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         'endTime': DateTime.now().toIso8601String(),
         'startMonumentId': updatedTrip.startMonumentId,
         'endMonumentId': event.endMonument.id,
-        'monuments': monumentsJson,
+        'monuments': monumentsJson, // Use the collected monuments
         'purpose': purposeAsString,
         'mode': vehicleTypeAsString,
       });
@@ -448,12 +454,43 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     }
   }
 
+  Future<void> _onCheckNearbyMonument(
+    CheckNearbyMonument event,
+    Emitter<TripState> emit,
+  ) async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final currentLocation = LatLng(position.latitude, position.longitude);
+
+      final nearestMonument =
+          await MonumentService.findNearestMonument(currentLocation);
+
+      if (nearestMonument != null) {
+        // Only add if not already in the set
+        _monumentsPassed.add(nearestMonument);
+
+        // Update the state with new monuments list
+        if (state.currentTrip != null) {
+          final updatedTrip = state.currentTrip!.copyWith(
+            monuments: _monumentsPassed.map((m) => m.id).toList(),
+          );
+          emit(state.copyWith(currentTrip: updatedTrip));
+        }
+      }
+    } catch (e) {
+      print('Error checking nearby monument: $e');
+    }
+  }
+
   @override
   Future<void> close() {
     _locationTimer?.cancel();
     _locationSubscription?.cancel();
     _monumentSubscription?.cancel();
     _locationService.dispose();
+    _monumentCheckTimer?.cancel();
     return super.close();
   }
 
