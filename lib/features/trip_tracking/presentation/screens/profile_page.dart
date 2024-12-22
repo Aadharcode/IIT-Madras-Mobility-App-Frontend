@@ -5,6 +5,10 @@ import '../../../authentication/presentation/bloc/auth_event.dart';
 // import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../../../main.dart';
 import '../../../authentication/data/services/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,12 +22,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
   String errorMessage = '';
+  bool canDownloadData = false;
 
   @override
   void initState() {
     super.initState();
     authService = AuthService();
     _loadUserProfile();
+    _checkDataAccess();
   }
 
   Future<void> _loadUserProfile() async {
@@ -43,6 +49,76 @@ class _ProfilePageState extends State<ProfilePage> {
         isLoading = false;
         errorMessage = e.toString();
       });
+    }
+  }
+
+  Future<void> _checkDataAccess() async {
+    try {
+      final token = await authService.getToken();
+      if (token == null) return;
+
+      final response = await http.head(
+        Uri.parse('https://temp-backend-mob.onrender.com/trip/getData'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          canDownloadData = true;
+        });
+      }
+    } catch (e) {
+      print('Error checking data access: $e');
+    }
+  }
+
+  Future<void> _downloadTripData() async {
+    try {
+      final token = await authService.getToken();
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication error')),
+        );
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('https://temp-backend-mob.onrender.com/trip/getData'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'text/csv',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Get temporary directory
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/trip_data.csv';
+
+        // Write the CSV data to a file
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        // Share the file
+        await Share.shareXFiles(
+          [XFile(filePath)],
+          subject: 'Trip Data',
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CSV file ready to share')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to download data')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
@@ -145,7 +221,21 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      if (canDownloadData) ...[
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _downloadTripData,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          child: const Text(
+                            'Download Trip Data (CSV)',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
                           context.read<AuthBloc>().add(const LogoutEvent());
