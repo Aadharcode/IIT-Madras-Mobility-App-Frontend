@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user_session.dart';
 export 'auth_service.dart';
 
 class AuthException implements Exception {
@@ -14,8 +15,9 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.162.250:3000';
+  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
   static const String tokenKey = 'kjbnaeildnflia';
+  static const String sessionKey = 'user_session';
 
   Future<void> sendOtp(String phoneNumber) async {
     try {
@@ -86,10 +88,17 @@ class AuthService {
 
       final data = json.decode(response.body);
       print('✅ OTP verified successfully');
-      print('🎫 Received token: ${data['token']?.substring(0, 10)}...');
 
+      // Create session with 4-day expiry
+      final session = UserSession(
+        token: data['token'],
+        expiryDate: DateTime.now().add(const Duration(days: 4)),
+        userId: data['user']['_id'],
+      );
+
+      await saveSession(session);
       await _saveToken(data['token']);
-      print('💾 Token saved to storage');
+      print('💾 Token and session saved to storage');
 
       return data;
     } catch (e, stackTrace) {
@@ -173,5 +182,34 @@ class AuthService {
     } catch (e) {
       throw Exception('Failed to fetch user profile: $e');
     }
+  }
+
+  Future<void> saveSession(UserSession session) async {
+    final prefs = await SharedPreferences.getInstance();
+    final sessionJson = json.encode(session.toJson());
+    await prefs.setString(sessionKey, sessionJson);
+  }
+
+  Future<UserSession?> getSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final sessionJson = prefs.getString(sessionKey);
+
+    if (sessionJson == null) return null;
+
+    final sessionMap = json.decode(sessionJson);
+    final session = UserSession.fromJson(sessionMap);
+
+    // Check if session is expired
+    if (DateTime.now().isAfter(session.expiryDate)) {
+      await clearSession();
+      return null;
+    }
+
+    return session;
+  }
+
+  Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(sessionKey);
   }
 }

@@ -9,21 +9,25 @@ import 'features/authentication/presentation/bloc/auth_event.dart';
 import 'features/trip_tracking/data/services/location_service.dart';
 import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
+import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundService.initializeService();
 
-void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => AuthBloc()),
+        BlocProvider(
+          create: (context) => AuthBloc()..add(const CheckAuthStatus()),
+        ),
         BlocProvider(
           create: (context) => TripBloc(
             locationService: LocationService(),
@@ -98,10 +102,12 @@ class AuthenticationWrapper extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state.isAuthenticated) {
-          if (state.userCategory != null && state.residenceType != null) {
+          if (state.userId != null) {
             return TripTrackingScreen(userId: state.userId!);
           }
-          return const UserProfileScreen();
+          if (state.userCategory == null || state.residenceType == null) {
+            return const UserProfileScreen();
+          }
         }
         return const PhoneAuthScreen();
       },
@@ -163,48 +169,50 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 48),
-                   Row(
-  mainAxisAlignment: MainAxisAlignment.center, // Centers the content in the row
-  children: [
-    Hero(
-      tag: 'app_logo_svg',
-      child: Container(
-        height: 120,
-        width: 120,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: SvgPicture.asset(
-            'assets/images/logo.svg',
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    ),
-    SizedBox(width: 16), // Adds spacing between the two images
-    Hero(
-      tag: 'app_logo_image',
-      child: Container(
-        height: 120,
-        width: 120,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Image.asset(
-            'assets/images/app_image.png',
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    ),
-  ],
-),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment
+                          .center, // Centers the content in the row
+                      children: [
+                        Hero(
+                          tag: 'app_logo_svg',
+                          child: Container(
+                            height: 120,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: SvgPicture.asset(
+                                'assets/images/logo.svg',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                            width: 16), // Adds spacing between the two images
+                        Hero(
+                          tag: 'app_logo_image',
+                          child: Container(
+                            height: 120,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Image.asset(
+                                'assets/images/app_image.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 32),
                     Text(
                       'Welcome to IITM Mobility',
@@ -276,7 +284,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                           SizedBox(height: 16),
                           TextFormField(
                             controller: _nameController,
-                            
                             style: theme.textTheme.titleMedium,
                             decoration: const InputDecoration(
                               labelText: 'Name',
@@ -304,7 +311,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                         ),
                                       );
                                 }
-                                
                               },
                               child: const Text('Get OTP'),
                             ),

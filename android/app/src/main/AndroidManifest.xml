@@ -11,6 +11,11 @@
         android:label="IITM Mobility"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <service
+    android:name=".LocationService"
+    android:foregroundServiceType="location"
+    android:enabled="true"
+    android:exported="false" />
 
         <!-- Google Maps API Key -->
         <meta-data

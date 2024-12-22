@@ -25,16 +25,18 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location to track your trips within the IITM campus.</string>
+	<string>This app needs access to location when open to track your trips.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to location to track your trips within the IITM campus even when the app is in background.</string>
+	<string>This app needs access to location when in background to track your trips.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to location to track your trips within the IITM campus.</string>
+	<string>This app needs access to location when in background to track your trips.</string>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>fetch</string>
+		 <string>processing</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

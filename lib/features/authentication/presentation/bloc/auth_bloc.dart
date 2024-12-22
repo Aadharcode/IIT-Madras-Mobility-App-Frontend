@@ -7,7 +7,7 @@ import 'dart:convert';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
-  static const String baseUrl = 'http://192.168.162.250:3000';
+  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
 
   AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),
@@ -73,7 +73,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      await _authService.logout();
+      await _authService.clearSession();
       emit(const AuthState());
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
@@ -87,10 +87,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(state.copyWith(isLoading: true, error: null));
       print('🔄 Starting user profile update...');
-      
+
       String userCategoryString = enumToString(event.userCategory);
       String residenceTypeString = enumToString(event.residenceType);
-      print('📋 User category: $userCategoryString, Residence type: $residenceTypeString');
+      print(
+          '📋 User category: $userCategoryString, Residence type: $residenceTypeString');
 
       final token = await _authService.getToken();
       if (token == null) {
@@ -145,7 +146,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-
   Future<void> _onSignOut(
     SignOut event,
     Emitter<AuthState> emit,
@@ -158,10 +158,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      final token = await _authService.getToken();
-      emit(state.copyWith(
-        isAuthenticated: token != null,
-      ));
+      final session = await _authService.getSession();
+
+      if (session != null) {
+        emit(state.copyWith(
+          isAuthenticated: true,
+          userId: session.userId,
+          userCategory: session.userCategory,
+          residenceType: session.residenceType,
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

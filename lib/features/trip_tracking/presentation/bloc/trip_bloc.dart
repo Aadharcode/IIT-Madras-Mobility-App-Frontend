@@ -33,14 +33,48 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<StartTrip>(_onStartTrip);
     on<EndTrip>(_onEndTrip);
     on<UpdateTripDetails>(_onUpdateTripDetails);
-    // on<MonumentReached>(_onMonumentReached);
-    // on<LocationUpdated>(_onLocationUpdated);
-    // on<IdleTimeout>(_onIdleTimeout);
+    on<MonumentReached>(_onMonumentReached);
+    on<LocationUpdated>(_onLocationUpdated);
+    on<IdleTimeout>(_onIdleTimeout);
     on<LoadPastTrips>(_onLoadPastTrips);
     on<CheckLocation>(_onCheckLocation);
     on<CheckNearbyMonument>(_onCheckNearbyMonument);
 
     _initializeLocationTracking();
+  }
+  void _onLocationUpdated(
+    LocationUpdated event,
+    Emitter<TripState> emit,
+  ) {
+    emit(state.copyWith(
+      currentLocation: event.location,
+      error: null,
+    ));
+  }
+
+  void _onMonumentReached(
+    MonumentReached event,
+    Emitter<TripState> emit,
+  ) {
+    if (state.isActive && state.currentTrip != null) {
+      _monumentsPassed.add(event.monument);
+      final updatedTrip = state.currentTrip!.copyWith(
+        monuments: _monumentsPassed.map((m) => m.id).toList(),
+      );
+      emit(state.copyWith(
+        currentTrip: updatedTrip,
+        error: null,
+      ));
+    }
+  }
+
+  void _onIdleTimeout(
+    IdleTimeout event,
+    Emitter<TripState> emit,
+  ) {
+    if (state.isActive) {
+      add(EndTrip());
+    }
   }
 
   Future<LatLng?> _getUserLocation() async {
@@ -86,6 +120,10 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     _locationSubscription = _locationService.locationStream.listen(
       (position) {
         add(LocationUpdated(LatLng(position.latitude, position.longitude)));
+      },
+      onError: (error) {
+        print('Location tracking error in bloc: $error');
+        // Implement retry logic or error handling as needed
       },
     );
 

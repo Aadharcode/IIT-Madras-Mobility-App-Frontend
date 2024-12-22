@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/monument.dart';
 
 class MonumentService {
-  static const String _url = 'http://192.168.162.250:3000/monument';
+  static const String _url = 'https://temp-backend-mob.onrender.com/monument';
   static const String _monumentKey = 'monuments';
 
   /// Fetch monuments from the API or local storage
@@ -85,7 +85,7 @@ class MonumentService {
               item['lat'] as double,
               item['long'] as double,
             ),
-            radius: 100.0, // Use a default radius for local data as well
+            radius: 50.0, // Use a default radius for local data as well
             description: null, // Optional field
           );
         }).toList();

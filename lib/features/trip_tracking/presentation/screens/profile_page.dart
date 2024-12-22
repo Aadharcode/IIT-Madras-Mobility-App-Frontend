@@ -83,7 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        "name: ${userProfile?['name'] ?? 'Not Available'}",
+                        "Name: ${userProfile?['name'] ?? 'Not Available'}",
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 5),

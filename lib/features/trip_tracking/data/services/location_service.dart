@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:geolocator_android/geolocator_android.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/monument.dart';
+import 'dart:io';
 
 class LocationService {
   static const Duration locationUpdateInterval = Duration(seconds: 10);
@@ -36,8 +38,13 @@ class LocationService {
     if (permission == LocationPermission.deniedForever) {
       return false;
     }
+    // Request background permission separately
+    if (permission == LocationPermission.whileInUse) {
+      permission = await Geolocator.requestPermission();
+    }
 
-    return true;
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
   }
 
   Future<Position?> getCurrentLocation() async {
@@ -53,17 +60,34 @@ class LocationService {
     }
   }
 
-  void startLocationTracking() {
-    Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // minimum distance (meters) before updates
-        timeLimit: locationUpdateInterval,
-      ),
-    ).listen((Position position) {
-      _handleLocationUpdate(position);
-    });
-  }
+void startLocationTracking() {
+  final LocationSettings locationSettings = Platform.isIOS 
+      ? AppleSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+          activityType: ActivityType.fitness,
+          allowBackgroundLocationUpdates: true,
+          pauseLocationUpdatesAutomatically: false,
+        )
+      : AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+          intervalDuration: locationUpdateInterval,
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: "IITM Mobility App",
+            notificationText: "Tracking your trip in background",
+            enableWakeLock: true,
+          ),
+        );
+
+  Geolocator.getPositionStream(locationSettings: locationSettings)
+      .listen((Position position) {
+    _handleLocationUpdate(position);
+  }, onError: (error) {
+    print('Location tracking error: $error');
+    // Implement error recovery logic here
+  });
+}
 
   void _handleLocationUpdate(Position position) {
     _lastPosition = position;
@@ -81,7 +105,7 @@ class LocationService {
 
   void _checkMonuments(Position position) {
     final currentLocation = LatLng(position.latitude, position.longitude);
-    
+
     for (final monument in sampleMonuments) {
       if (monument.isInRange(currentLocation)) {
         _monumentController.add(monument);
@@ -105,4 +129,4 @@ class LocationService {
     _monumentController.close();
     _idleTimer?.cancel();
   }
-} 
+}
