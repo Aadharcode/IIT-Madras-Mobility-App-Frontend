@@ -10,6 +10,7 @@ import 'features/trip_tracking/data/services/location_service.dart';
 import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
 import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
+import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -126,11 +127,109 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final _phoneController = TextEditingController();
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool? _hasConsent;
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _nameController.dispose();
     super.dispose();
+  }
+
+  void _showExitDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Exit App'),
+          content: const Text(
+              'You need to accept the terms to use this app. Would you like to exit?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Review Again'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                SystemNavigator.pop(); // This will close the app
+              },
+              child: const Text('Exit App'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildConsentSection(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey[200]!,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Terms and Conditions',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'By using this app, you agree to:\n\n'
+            '• Share your location data for trip tracking\n'
+            '• Allow us to store and process your data\n'
+            '• Receive important notifications\n'
+            '• Our privacy policy and terms of service',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _hasConsent = false;
+                    });
+                    _showExitDialog();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                  ),
+                  child: const Text('Decline'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _hasConsent = true;
+                    });
+                  },
+                  child: const Text('Accept'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -231,92 +330,95 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey[200]!,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Enter your mobile number and name',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                    if (_hasConsent == null)
+                      _buildConsentSection(theme)
+                    else if (_hasConsent == true)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey[200]!,
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'We\'ll call you with a verification code',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey[600],
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Enter your mobile number and name',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            style: theme.textTheme.titleMedium,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              hintText: 'Enter your mobile number',
-                              prefixText: '+91 ',
-                              prefixIcon: Icon(Icons.phone_android),
+                            const SizedBox(height: 8),
+                            Text(
+                              'We\'ll call you with a verification code',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.grey[600],
+                              ),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your phone number';
-                              }
-                              if (value.length != 10) {
-                                return 'Please enter a valid 10-digit phone number';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 16),
-                          TextFormField(
-                            controller: _nameController,
-                            style: theme.textTheme.titleMedium,
-                            decoration: const InputDecoration(
-                              labelText: 'Name',
-                              hintText: 'Enter your Name',
-                              prefixIcon: Icon(Icons.phone_android),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your phone number';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          if (state.isLoading)
-                            const Center(child: CircularProgressIndicator())
-                          else
-                            ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  context.read<AuthBloc>().add(
-                                        SendPhoneNumberVerification(
-                                          _phoneController.text,
-                                          _nameController.text,
-                                        ),
-                                      );
+                            const SizedBox(height: 24),
+                            TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              style: theme.textTheme.titleMedium,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number',
+                                hintText: 'Enter your mobile number',
+                                prefixText: '+91 ',
+                                prefixIcon: Icon(Icons.phone_android),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your phone number';
                                 }
+                                if (value.length != 10) {
+                                  return 'Please enter a valid 10-digit phone number';
+                                }
+                                return null;
                               },
-                              child: const Text('Get OTP'),
                             ),
-                        ],
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nameController,
+                              style: theme.textTheme.titleMedium,
+                              decoration: const InputDecoration(
+                                labelText: 'Name',
+                                hintText: 'Enter your Name',
+                                prefixIcon: Icon(Icons.phone_android),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your phone number';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            if (state.isLoading)
+                              const Center(child: CircularProgressIndicator())
+                            else
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
+                                    context.read<AuthBloc>().add(
+                                          SendPhoneNumberVerification(
+                                            _phoneController.text,
+                                            _nameController.text,
+                                          ),
+                                        );
+                                  }
+                                },
+                                child: const Text('Get OTP'),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
