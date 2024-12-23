@@ -182,23 +182,30 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         ],
       ),
       padding: const EdgeInsets.all(24),
+      constraints: const BoxConstraints(maxHeight: 400),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Terms and Conditions',
+            'Welcome to IITM Mobility Research',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            'By using this app, you agree to:\n\n'
-            '• Share your location data for trip tracking\n'
-            '• Allow us to store and process your data\n'
-            '• Receive important notifications\n'
-            '• Our privacy policy and terms of service',
-            style: theme.textTheme.bodyMedium,
+          Flexible(
+            child: SingleChildScrollView(
+              child: Text(
+                'This app is part of a research initiative by IIT Madras to improve campus mobility and sustainability. By participating, you agree to:\n\n'
+                '• Share anonymous location data only when you enter or exit specific campus locations\n'
+                '• Contribute to research aimed at reducing traffic congestion and protecting campus wildlife\n'
+                '• Receive important updates about the research and campus mobility\n'
+                '• Help us develop better transportation solutions for our campus community\n\n'
+                'Your data will be used solely for research purposes and handled with strict confidentiality.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -214,7 +221,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.error,
                   ),
-                  child: const Text('Decline'),
+                  child: const Text('Maybe Later'),
                 ),
               ),
               const SizedBox(width: 16),
@@ -225,7 +232,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       _hasConsent = true;
                     });
                   },
-                  child: const Text('Accept'),
+                  child: const Text('Participate'),
                 ),
               ),
             ],
@@ -270,54 +277,26 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 48),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment
-                          .center, // Centers the content in the row
-                      children: [
-                        Hero(
-                          tag: 'app_logo_svg',
-                          child: Container(
-                            height: 120,
-                            width: 120,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: SvgPicture.asset(
-                                'assets/images/logo.svg',
-                                fit: BoxFit.contain,
-                              ),
+                    const SizedBox(height: 1),
+                    Center(
+                      child: Hero(
+                        tag: 'app_logo_image',
+                        child: Container(
+                          height: 180,
+                          width: 180,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset(
+                              'assets/images/app_logo.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
-                        SizedBox(
-                            width: 16), // Adds spacing between the two images
-                        Hero(
-                          tag: 'app_logo_image',
-                          child: Container(
-                            height: 120,
-                            width: 120,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Image.asset(
-                                'assets/images/app_logo.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 2),
                     Text(
-                      'Welcome to IITM Mobility',
+                      'IITM Mobility',
                       style: theme.textTheme.headlineMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -326,13 +305,13 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Track your campus commute and contribute to sustainable mobility',
+                      'Help us build a sustainable campus mobility solution',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: Colors.grey[600],
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
                     if (_hasConsent == null)
                       _buildConsentSection(theme)
                     else if (_hasConsent == true)
@@ -422,6 +401,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                           ],
                         ),
                       ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/images/logo.svg',
+                          height: 40,
+                          width: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'IIT Madras',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
