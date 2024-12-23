@@ -205,7 +205,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(24),
                               child: Image.asset(
-                                'assets/images/app_image.png',
+                                'assets/images/app_logo.png',
                                 fit: BoxFit.contain,
                               ),
                             ),
