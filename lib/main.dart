@@ -372,11 +372,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Name',
                                 hintText: 'Enter your Name',
-                                prefixIcon: Icon(Icons.phone_android),
+                                prefixIcon: Icon(Icons.person_outline),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your phone number';
+                                  return 'Please enter your name';
                                 }
                                 return null;
                               },
