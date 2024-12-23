@@ -25,7 +25,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   int _stationaryCounter = 0;
   final _uuid = const Uuid();
   Timer? _monumentCheckTimer;
-  Set<Monument> _monumentsPassed = {};
+  final Map<String, DateTime> _monumentVisitTimes = {};
 
   TripBloc({required LocationService locationService})
       : _locationService = locationService,
@@ -57,10 +57,19 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     Emitter<TripState> emit,
   ) {
     if (state.isActive && state.currentTrip != null) {
-      _monumentsPassed.add(event.monument);
+      _monumentVisitTimes[event.monument.id] = DateTime.now();
+
+      final monumentVisits = _monumentVisitTimes.entries
+          .map((entry) => MonumentVisit(
+                monumentId: entry.key,
+                timestamp: entry.value,
+              ))
+          .toList();
+
       final updatedTrip = state.currentTrip!.copyWith(
-        monuments: _monumentsPassed.map((m) => m.id).toList(),
+        monumentVisits: monumentVisits,
       );
+
       emit(state.copyWith(
         currentTrip: updatedTrip,
         error: null,
@@ -264,7 +273,12 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       vehicleType: event.vehicleType,
       purpose: event.purpose,
       occupancy: event.occupancy,
-      monuments: _monumentsPassed.map((m) => m.id).toList(),
+      monumentVisits: _monumentVisitTimes.entries
+          .map((entry) => MonumentVisit(
+                monumentId: entry.key,
+                timestamp: entry.value,
+              ))
+          .toList(),
     );
 
     // Debugging endMonumentId
@@ -324,10 +338,10 @@ class TripBloc extends Bloc<TripEvent, TripState> {
           break;
       }
 
-      // Convert the monuments from Set<Monument> to array of IDs
-      final monumentsJson = _monumentsPassed
-          .map((monument) => {
-                '_id': monument.id,
+      final monumentVisitsJson = _monumentVisitTimes.entries
+          .map((entry) => {
+                'monument': entry.key,
+                'timestamp': entry.value.toIso8601String(),
               })
           .toList();
 
@@ -344,9 +358,10 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         'endTime': DateTime.now().toIso8601String(),
         'startMonumentId': updatedTrip.startMonumentId,
         'endMonumentId': event.endMonument.id,
-        'monuments': monumentsJson, // Use the collected monuments
+        'monumentVisits': monumentVisitsJson,
         'purpose': purposeAsString,
         'mode': vehicleTypeAsString,
+        'occupancy': event.occupancy,
       });
       print('🌐 $body');
       final response = await http.post(
@@ -433,6 +448,15 @@ class TripBloc extends Bloc<TripEvent, TripState> {
             monuments: monuments.isEmpty ? null : monuments,
             purpose: _parseTripPurpose(tripData['purpose'] as String?),
             vehicleType: _parseVehicleType(tripData['mode'] as String?),
+            occupancy: tripData['occupancy'] as int?,
+            monumentVisits: (tripData['monumentVisits'] as List?)
+                    ?.map((visit) => MonumentVisit(
+                          monumentId: visit['monument'].toString(),
+                          timestamp:
+                              DateTime.parse(visit['timestamp'] as String),
+                        ))
+                    .toList() ??
+                [],
           );
         }).toList();
 
@@ -507,12 +531,17 @@ class TripBloc extends Bloc<TripEvent, TripState> {
 
       if (nearestMonument != null) {
         // Only add if not already in the set
-        _monumentsPassed.add(nearestMonument);
+        _monumentVisitTimes[nearestMonument.id] = DateTime.now();
 
         // Update the state with new monuments list
         if (state.currentTrip != null) {
           final updatedTrip = state.currentTrip!.copyWith(
-            monuments: _monumentsPassed.map((m) => m.id).toList(),
+            monumentVisits: _monumentVisitTimes.entries
+                .map((entry) => MonumentVisit(
+                      monumentId: entry.key,
+                      timestamp: entry.value,
+                    ))
+                .toList(),
           );
           emit(state.copyWith(currentTrip: updatedTrip));
         }

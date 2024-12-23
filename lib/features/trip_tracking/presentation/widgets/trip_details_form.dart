@@ -24,6 +24,13 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
   TripPurpose? _selectedPurpose;
   int? _occupancy;
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _occupancyController = TextEditingController();
+
+  @override
+  void dispose() {
+    _occupancyController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +93,43 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
               validator: (value) =>
                   value == null ? 'Please select a trip purpose' : null,
             ),
+            const SizedBox(height: 16),
+            // Add occupancy field if two-wheeler or four-wheeler is selected
+            if (_selectedVehicleType == VehicleType.twoWheeler ||
+                _selectedVehicleType == VehicleType.fourWheeler) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _occupancyController,
+                decoration: const InputDecoration(
+                  labelText: 'Number of Occupants',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter number of occupants';
+                  }
+                  final number = int.tryParse(value);
+                  if (number == null) {
+                    return 'Please enter a valid number';
+                  }
+                  if (_selectedVehicleType == VehicleType.twoWheeler &&
+                      (number < 1 || number > 2)) {
+                    return 'Two-wheeler can have 1-2 occupants';
+                  }
+                  if (_selectedVehicleType == VehicleType.fourWheeler &&
+                      (number < 1 || number > 5)) {
+                    return 'Four-wheeler can have 1-5 occupants';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {
+                    _occupancy = int.tryParse(value);
+                  });
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             // Submit Button
             SizedBox(

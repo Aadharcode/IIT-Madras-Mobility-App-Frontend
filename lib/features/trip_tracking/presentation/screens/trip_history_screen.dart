@@ -151,10 +151,12 @@ class _TripCard extends StatelessWidget {
           );
     //debugPrint('End monument: ${endMonument.name}');
 
-    final monumentsPassed = (trip.monuments ?? [])
-        .map((id) => monumentMap[id]?.name ?? 'Unknown Monument')
-        .toList();
-    //debugPrint('Monuments passed: $monumentsPassed');
+    final monumentVisitsFormatted = trip.monumentVisits.map((visit) {
+      final monumentName =
+          monumentMap[visit.monumentId]?.name ?? 'Unknown Monument';
+      final timeFormat = DateFormat('hh:mm a');
+      return '$monumentName (${timeFormat.format(visit.timestamp)})';
+    }).toList();
 
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
@@ -185,7 +187,7 @@ class _TripCard extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            '${_getVehicleTypeText(trip.vehicleType)} • ${_getPurposeText(trip.purpose)}',
+            '${_getVehicleTypeText(trip.vehicleType)}${_getOccupancyText(trip.vehicleType, trip.occupancy)} • ${_getPurposeText(trip.purpose)}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
@@ -220,12 +222,12 @@ class _TripCard extends StatelessWidget {
               value: endMonument.name,
             ),
             const SizedBox(height: 8),
-            if (monumentsPassed.isNotEmpty)
+            if (monumentVisitsFormatted.isNotEmpty)
               _buildInfoRow(
                 context,
                 icon: Icons.flag,
-                label: 'Monuments Passed',
-                value: monumentsPassed.join(', '),
+                label: 'Monuments',
+                value: monumentVisitsFormatted.join('\n'),
               ),
           ],
         ),
@@ -241,7 +243,7 @@ class _TripCard extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     //debugPrint('Building info row for $label: $value');
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -327,6 +329,18 @@ class _TripCard extends StatelessWidget {
         return 'Shopping';
       case TripPurpose.food:
         return 'Food';
+    }
+  }
+
+  String _getOccupancyText(VehicleType? type, int? occupancy) {
+    if (type == null || occupancy == null) return '';
+    switch (type) {
+      case VehicleType.twoWheeler:
+        return ' (${occupancy} people)';
+      case VehicleType.fourWheeler:
+        return ' (${occupancy} people)';
+      default:
+        return '';
     }
   }
 }

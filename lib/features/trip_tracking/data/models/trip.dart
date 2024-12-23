@@ -1,21 +1,24 @@
 import 'package:equatable/equatable.dart';
 
-enum VehicleType {
-  walk,
-  cycle,
-  twoWheeler,
-  threeWheeler,
-  fourWheeler,
-  iitmBus
-}
+enum VehicleType { walk, cycle, twoWheeler, threeWheeler, fourWheeler, iitmBus }
 
-enum TripPurpose {
-  class_,
-  work,
-  school,
-  recreation,
-  shopping,
-  food
+enum TripPurpose { class_, work, school, recreation, shopping, food }
+
+class MonumentVisit {
+  final String monumentId;
+  final DateTime timestamp;
+
+  MonumentVisit({
+    required this.monumentId,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'monumentId': monumentId,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
 }
 
 class Trip extends Equatable {
@@ -31,6 +34,7 @@ class Trip extends Equatable {
   final TripPurpose? purpose;
   final int? occupancy;
   final bool isActive;
+  final List<MonumentVisit> monumentVisits;
 
   const Trip({
     required this.id,
@@ -45,6 +49,7 @@ class Trip extends Equatable {
     this.purpose,
     this.occupancy,
     this.isActive = true,
+    this.monumentVisits = const [],
   });
 
   Trip copyWith({
@@ -60,6 +65,7 @@ class Trip extends Equatable {
     TripPurpose? purpose,
     int? occupancy,
     bool? isActive,
+    List<MonumentVisit>? monumentVisits,
   }) {
     return Trip(
       id: id ?? this.id,
@@ -74,6 +80,7 @@ class Trip extends Equatable {
       purpose: purpose ?? this.purpose,
       occupancy: occupancy ?? this.occupancy,
       isActive: isActive ?? this.isActive,
+      monumentVisits: monumentVisits ?? this.monumentVisits,
     );
   }
 
@@ -90,10 +97,12 @@ class Trip extends Equatable {
       'purpose': purpose?.index,
       'occupancy': occupancy,
       'isActive': isActive,
+      'monumentVisits': monumentVisits.map((mv) => mv.toJson()).toList(),
     };
   }
 
   factory Trip.fromJson(Map<String, dynamic> json) {
+    print('🌐 Monument Visits: ${json['monumentVisits']}');
     return Trip(
       id: json['id'],
       userId: json['userId'],
@@ -102,8 +111,8 @@ class Trip extends Equatable {
       startMonumentId: json['startMonumentId'],
       endMonumentId: json['endMonumentId'],
       monuments: (json['monuments'] as List)
-        .map((c) => c as String) // Cast each item to String
-        .toList(),
+          .map((c) => c as String) // Cast each item to String
+          .toList(),
       checkpoints: (json['checkpoints'] as List)
           .map((c) => TripCheckpoint.fromJson(c))
           .toList(),
@@ -112,8 +121,17 @@ class Trip extends Equatable {
           : null,
       purpose:
           json['purpose'] != null ? TripPurpose.values[json['purpose']] : null,
-      occupancy: json['occupancy'],
+      occupancy: json['occupancy'] != null
+          ? int.parse(json['occupancy'].toString())
+          : null,
       isActive: json['isActive'],
+      monumentVisits: (json['monumentVisits'] as List?)
+              ?.map((mv) => MonumentVisit(
+                    monumentId: mv['monument'].toString(),
+                    timestamp: DateTime.parse(mv['timestamp']),
+                  ))
+              .toList() ??
+          [],
     );
   }
 
@@ -130,6 +148,7 @@ class Trip extends Equatable {
         purpose,
         occupancy,
         isActive,
+        monumentVisits,
       ];
 }
 
@@ -169,5 +188,5 @@ class TripCheckpoint extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id,monumentName, timestamp, lat, lng];
-} 
+  List<Object?> get props => [id, monumentName, timestamp, lat, lng];
+}
