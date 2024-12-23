@@ -116,11 +116,12 @@ class Trip extends Equatable {
       checkpoints: (json['checkpoints'] as List)
           .map((c) => TripCheckpoint.fromJson(c))
           .toList(),
-      vehicleType: json['vehicleType'] != null
-          ? VehicleType.values[json['vehicleType']]
+      vehicleType: json['mode'] != null
+          ? _parseVehicleType(json['mode'] as String)
           : null,
-      purpose:
-          json['purpose'] != null ? TripPurpose.values[json['purpose']] : null,
+      purpose: json['purpose'] != null
+          ? _parseTripPurpose(json['purpose'] as String)
+          : null,
       occupancy: json['occupancy'] != null
           ? int.parse(json['occupancy'].toString())
           : null,
@@ -133,6 +134,44 @@ class Trip extends Equatable {
               .toList() ??
           [],
     );
+  }
+
+  static VehicleType? _parseVehicleType(String mode) {
+    switch (mode.toLowerCase()) {
+      case 'walk':
+        return VehicleType.walk;
+      case 'cycle':
+        return VehicleType.cycle;
+      case 'twowheeler':
+        return VehicleType.twoWheeler;
+      case 'threewheeler':
+        return VehicleType.threeWheeler;
+      case 'fourwheeler':
+        return VehicleType.fourWheeler;
+      case 'iitmbus':
+        return VehicleType.iitmBus;
+      default:
+        return null;
+    }
+  }
+
+  static TripPurpose? _parseTripPurpose(String purpose) {
+    switch (purpose.toLowerCase()) {
+      case 'class':
+        return TripPurpose.class_;
+      case 'work':
+        return TripPurpose.work;
+      case 'school':
+        return TripPurpose.school;
+      case 'recreation':
+        return TripPurpose.recreation;
+      case 'shopping':
+        return TripPurpose.shopping;
+      case 'food':
+        return TripPurpose.food;
+      default:
+        return null;
+    }
   }
 
   @override

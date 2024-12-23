@@ -8,6 +8,11 @@ import '../bloc/trip_bloc.dart';
 import '../bloc/trip_event.dart';
 import '../bloc/trip_state.dart';
 import '../../data/services/monument_services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import '../widgets/trip_details_form.dart';
+import '../../../authentication/data/services/auth_service.dart';
 
 class TripHistoryScreen extends StatefulWidget {
   final String userId;
@@ -124,10 +129,69 @@ class _TripCard extends StatelessWidget {
     required this.monumentMap,
   });
 
+  bool get _needsDetails => trip.vehicleType == null || trip.purpose == null;
+
+  void _showTripDetailsForm(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Trip Details'),
+        content: TripDetailsForm(
+          onSubmit: (vehicleType, purpose, occupancy, selectedMonuments,
+              endMonument) async {
+            try {
+              final token = await AuthService().getToken();
+              if (token == null) {
+                throw Exception('Authentication token not found');
+              }
+
+              final response = await http.patch(
+                Uri.parse('${TripBloc.baseUrl}/trip/update/${trip.id}'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({
+                  'mode': vehicleType?.toString().split('.').last,
+                  'purpose': purpose?.toString().split('.').last,
+                  'occupancy': occupancy,
+                }),
+              );
+
+              if (response.statusCode == 200) {
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                // Refresh trip history
+                context.read<TripBloc>().add(LoadPastTrips(trip.userId));
+              } else {
+                throw Exception('Failed to update trip details');
+              }
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error updating trip details: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    //debugPrint('Building _TripCard for trip ${trip.id}');
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final timeFormat = DateFormat('hh:mm a');
 
     final startMonument = monumentMap[trip.startMonumentId] ??
         Monument(
@@ -158,38 +222,85 @@ class _TripCard extends StatelessWidget {
       return '$monumentName (${timeFormat.format(visit.timestamp)})';
     }).toList();
 
-    final dateFormat = DateFormat('MMM dd, yyyy');
-    final timeFormat = DateFormat('hh:mm a');
-
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      shape: _needsDetails
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: theme.colorScheme.error,
+                width: 2,
+              ),
+            )
+          : null,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              _getVehicleIcon(trip.vehicleType),
-              color: theme.colorScheme.primary,
-            ),
+          leading: Stack(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _needsDetails
+                      ? theme.colorScheme.error.withOpacity(0.1)
+                      : theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _getVehicleIcon(trip.vehicleType),
+                  color: _needsDetails
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                ),
+              ),
+              if (_needsDetails)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.warning_rounded,
+                      size: 14,
+                      color: theme.colorScheme.onError,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          title: Text(
-            dateFormat.format(trip.startTime),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  dateFormat.format(trip.startTime),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (_needsDetails)
+                Text(
+                  'Details needed',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
           subtitle: Text(
             '${_getVehicleTypeText(trip.vehicleType)}${_getOccupancyText(trip.vehicleType, trip.occupancy)} • ${_getPurposeText(trip.purpose)}',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: _needsDetails
+                  ? theme.colorScheme.error.withOpacity(0.8)
+                  : theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
           children: [
@@ -229,6 +340,13 @@ class _TripCard extends StatelessWidget {
                 label: 'Monuments',
                 value: monumentVisitsFormatted.join('\n'),
               ),
+            if (trip.vehicleType == null || trip.purpose == null) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => _showTripDetailsForm(context),
+                child: const Text('Set Trip Details'),
+              ),
+            ],
           ],
         ),
       ),
@@ -295,8 +413,7 @@ class _TripCard extends StatelessWidget {
   }
 
   String _getVehicleTypeText(VehicleType? type) {
-    //debugPrint('Getting vehicle type text for type: $type');
-    if (type == null) return 'Unknown';
+    if (type == null) return 'Not Set';
     switch (type) {
       case VehicleType.walk:
         return 'Walk';
@@ -314,8 +431,7 @@ class _TripCard extends StatelessWidget {
   }
 
   String _getPurposeText(TripPurpose? purpose) {
-    //debugPrint('Getting purpose text for purpose: $purpose');
-    if (purpose == null) return 'Unknown';
+    if (purpose == null) return 'Not Set';
     switch (purpose) {
       case TripPurpose.class_:
         return 'Class';

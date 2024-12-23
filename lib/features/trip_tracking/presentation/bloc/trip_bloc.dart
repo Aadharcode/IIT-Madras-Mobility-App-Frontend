@@ -294,48 +294,52 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       }
 
       // Prepare the purpose and vehicle type as strings
-      String purposeAsString;
-      switch (event.purpose) {
-        case TripPurpose.class_:
-          purposeAsString = 'class';
-          break;
-        case TripPurpose.work:
-          purposeAsString = 'work';
-          break;
-        case TripPurpose.school:
-          purposeAsString = 'school';
-          break;
-        case TripPurpose.recreation:
-          purposeAsString = 'recreation';
-          break;
-        case TripPurpose.shopping:
-          purposeAsString = 'shopping';
-          break;
-        case TripPurpose.food:
-          purposeAsString = 'food';
-          break;
+      String? purposeAsString;
+      if (event.purpose != null) {
+        switch (event.purpose!) {
+          case TripPurpose.class_:
+            purposeAsString = 'class';
+            break;
+          case TripPurpose.work:
+            purposeAsString = 'work';
+            break;
+          case TripPurpose.school:
+            purposeAsString = 'school';
+            break;
+          case TripPurpose.recreation:
+            purposeAsString = 'recreation';
+            break;
+          case TripPurpose.shopping:
+            purposeAsString = 'shopping';
+            break;
+          case TripPurpose.food:
+            purposeAsString = 'food';
+            break;
+        }
       }
 
-      String vehicleTypeAsString;
-      switch (event.vehicleType) {
-        case VehicleType.walk:
-          vehicleTypeAsString = 'walk';
-          break;
-        case VehicleType.cycle:
-          vehicleTypeAsString = 'cycle';
-          break;
-        case VehicleType.twoWheeler:
-          vehicleTypeAsString = 'twoWheeler';
-          break;
-        case VehicleType.threeWheeler:
-          vehicleTypeAsString = 'threeWheeler';
-          break;
-        case VehicleType.fourWheeler:
-          vehicleTypeAsString = 'fourWheeler';
-          break;
-        case VehicleType.iitmBus:
-          vehicleTypeAsString = 'iitmBus';
-          break;
+      String? vehicleTypeAsString;
+      if (event.vehicleType != null) {
+        switch (event.vehicleType!) {
+          case VehicleType.walk:
+            vehicleTypeAsString = 'walk';
+            break;
+          case VehicleType.cycle:
+            vehicleTypeAsString = 'cycle';
+            break;
+          case VehicleType.twoWheeler:
+            vehicleTypeAsString = 'twoWheeler';
+            break;
+          case VehicleType.threeWheeler:
+            vehicleTypeAsString = 'threeWheeler';
+            break;
+          case VehicleType.fourWheeler:
+            vehicleTypeAsString = 'fourWheeler';
+            break;
+          case VehicleType.iitmBus:
+            vehicleTypeAsString = 'iitmBus';
+            break;
+        }
       }
 
       final monumentVisitsJson = _monumentVisitTimes.entries
@@ -359,8 +363,8 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         'startMonumentId': updatedTrip.startMonumentId,
         'endMonumentId': event.endMonument.id,
         'monumentVisits': monumentVisitsJson,
-        'purpose': purposeAsString,
-        'mode': vehicleTypeAsString,
+        'purpose': event.purpose?.toString().split('.').last,
+        'mode': event.vehicleType?.toString().split('.').last,
         'occupancy': event.occupancy,
       });
       print('🌐 $body');
@@ -561,8 +565,8 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     return super.close();
   }
 
-  TripPurpose _parseTripPurpose(String? purpose) {
-    if (purpose == null) return TripPurpose.class_; // default value
+  TripPurpose? _parseTripPurpose(String? purpose) {
+    if (purpose == null) return null; // Return null instead of default
 
     switch (purpose.toLowerCase()) {
       case 'class':
@@ -578,12 +582,12 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       case 'food':
         return TripPurpose.food;
       default:
-        return TripPurpose.class_; // default value
+        return null; // Return null for unknown values
     }
   }
 
-  VehicleType _parseVehicleType(String? mode) {
-    if (mode == null) return VehicleType.walk; // default value
+  VehicleType? _parseVehicleType(String? mode) {
+    if (mode == null) return null; // Return null instead of default
 
     switch (mode.toLowerCase()) {
       case 'walk':
@@ -599,7 +603,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       case 'iitmbus':
         return VehicleType.iitmBus;
       default:
-        return VehicleType.walk; // default value
+        return null; // Return null for unknown values
     }
   }
 }

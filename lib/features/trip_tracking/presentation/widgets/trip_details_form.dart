@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class TripDetailsForm extends StatefulWidget {
-  final Function(VehicleType vehicleType, TripPurpose purpose, int? occupancy,
+  final Function(VehicleType? vehicleType, TripPurpose? purpose, int? occupancy,
       List<Monument> selectedMonuments, Monument endMonument) onSubmit;
 
   const TripDetailsForm({
@@ -134,53 +134,103 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
             // Submit Button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    // Get current location
-                    try {
-                      final position = await Geolocator.getCurrentPosition(
-                        desiredAccuracy: LocationAccuracy.high,
-                      );
-                      final currentLocation = LatLng(
-                        position.latitude,
-                        position.longitude,
-                      );
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          // Get current location
+                          try {
+                            final position =
+                                await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+                            final currentLocation = LatLng(
+                              position.latitude,
+                              position.longitude,
+                            );
 
-                      // Find nearest monument
-                      final nearestMonument =
-                          await MonumentService.findNearestMonument(
-                              currentLocation);
+                            // Find nearest monument
+                            final nearestMonument =
+                                await MonumentService.findNearestMonument(
+                                    currentLocation);
 
-                      if (nearestMonument == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'You must be near a monument to end the trip'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
+                            if (nearestMonument == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'You must be near a monument to end the trip'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
 
-                      widget.onSubmit(
-                        _selectedVehicleType!,
-                        _selectedPurpose!,
-                        _occupancy,
-                        [],
-                        nearestMonument,
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${e.toString()}'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Submit'),
+                            widget.onSubmit(
+                              _selectedVehicleType,
+                              _selectedPurpose,
+                              _occupancy,
+                              [],
+                              nearestMonument,
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Submit'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        try {
+                          final position = await Geolocator.getCurrentPosition(
+                            desiredAccuracy: LocationAccuracy.high,
+                          );
+                          final currentLocation = LatLng(
+                            position.latitude,
+                            position.longitude,
+                          );
+                          final nearestMonument =
+                              await MonumentService.findNearestMonument(
+                                  currentLocation);
+
+                          if (nearestMonument == null) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'You must be near a monument to end the trip'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          widget.onSubmit(
+                              null, null, null, [], nearestMonument);
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Skip Details'),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

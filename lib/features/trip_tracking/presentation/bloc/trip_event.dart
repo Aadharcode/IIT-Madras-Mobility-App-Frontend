@@ -29,8 +29,8 @@ class EndTrip extends TripEvent {
 }
 
 class UpdateTripDetails extends TripEvent {
-  final VehicleType vehicleType;
-  final TripPurpose purpose;
+  final VehicleType? vehicleType;
+  final TripPurpose? purpose;
   final int? occupancy;
   final List<Monument>? selectedMonuments;
   final String userId;
