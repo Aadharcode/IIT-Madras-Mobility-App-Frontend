@@ -11,10 +11,13 @@ import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
 import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
 import 'package:flutter/services.dart';
+import 'features/trip_tracking/data/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await BackgroundService.initializeService();
+  await NotificationService.initialize();
+  await NotificationService.scheduleNightlyCheck();
 
   runApp(const MyApp());
 }
