@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum UserCategory { student, faculty, nonFaculty, schoolRelative, others }
+enum UserCategory { student, faculty, nonFaculty, school, relative, others }
 
 enum ResidenceType { onCampus, offCampus }
 

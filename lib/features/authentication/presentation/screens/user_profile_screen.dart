@@ -126,13 +126,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String _getCategoryTitle(UserCategory category) {
     switch (category) {
       case UserCategory.student:
-        return 'Student';
+        return 'IITM Student';
       case UserCategory.faculty:
         return 'Faculty';
       case UserCategory.nonFaculty:
         return 'Non Faculty';
-      case UserCategory.schoolRelative:
-        return 'School Relative of IITM Resident';
+      case UserCategory.school:
+        return 'School Student';
+      case UserCategory.relative:
+        return 'Relative of IITM Student';
       case UserCategory.others:
         return 'Others';
     }
