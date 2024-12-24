@@ -24,8 +24,8 @@ dependencies:
   http: ^1.1.0
   flutter_background_service: ^5.1.0
   flutter_background_service_android: ^6.3.0
-  flutter_local_notifications: ^14.0.0+1
-  flutter_foreground_service: ^0.4.1
+  flutter_local_notifications: ^18.0.1
+  # flutter_foreground_service: ^0.4.1
   geolocator_android: ^4.6.1
   path_provider: ^2.1.5
   share_plus: ^10.1.3
