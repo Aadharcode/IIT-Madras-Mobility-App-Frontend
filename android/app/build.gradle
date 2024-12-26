@@ -29,7 +29,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        resValue "string", "google_maps_api_key", project.properties["google.maps.api.key"] ?: "YOUR_DEFAULT_API_KEY"
+        def properties = new Properties()
+        file("../local.properties").withInputStream { properties.load(it) }
+        resValue "string", "google_maps_api_key", properties.getProperty("google.maps.api.key")
     }
 
      buildFeatures {
@@ -49,5 +51,3 @@ android {
 flutter {
     source = "../.."
 }
-
-

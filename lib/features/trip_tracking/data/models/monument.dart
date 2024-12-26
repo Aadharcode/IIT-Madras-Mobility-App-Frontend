@@ -66,7 +66,7 @@ List<Monument> sampleMonuments = [];
 
 // Fetch monuments from API and update sampleMonuments
 Future<void> fetchMonuments() async {
-  const url = 'https://temp-backend-mob.onrender.com/monument/';
+  const url = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument/';
 
   try {
     final response = await http.get(Uri.parse(url));

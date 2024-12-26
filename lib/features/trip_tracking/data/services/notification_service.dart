@@ -5,7 +5,7 @@ import 'package:timezone/data/latest.dart' as tz;
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
-  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
+  static const String baseUrl = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
 
   static Future<void> initialize() async {
     tz.initializeTimeZones();
