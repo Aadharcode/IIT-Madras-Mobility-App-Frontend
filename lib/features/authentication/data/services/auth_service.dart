@@ -15,7 +15,8 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com';
+  static const String baseUrl =
+      'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
   static const String tokenKey = 'kjbnaeildnflia';
   static const String sessionKey = 'user_session';
 
