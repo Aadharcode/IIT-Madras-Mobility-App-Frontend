@@ -12,14 +12,49 @@ import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
 import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
 import 'package:flutter/services.dart';
 import 'features/trip_tracking/data/services/notification_service.dart';
-
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io' show Platform;
+import 'package:permission_handler/permission_handler.dart';
 void main() async {
+
+
+
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Request notification permission for Android 13 and above
+  if (Platform.isAndroid) {
+    final notificationPermission = await Permission.notification.status;
+    if (notificationPermission.isDenied) {
+      await Permission.notification.request();
+    }
+  }
+
+
   await BackgroundService.initializeService();
   await NotificationService.initialize();
+    final hasPermission = await requestExactAlarmPermission();
+  if (hasPermission) {
+    await NotificationService.scheduleNightlyCheck();
+  }
   await NotificationService.scheduleNightlyCheck();
+  // Request exact alarm permission before scheduling
 
   runApp(const MyApp());
+}
+
+Future<bool> requestExactAlarmPermission() async {
+  if (Platform.isAndroid) {
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+
+    final bool? result = await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestExactAlarmsPermission();
+
+    return result ?? false;
+  }
+  return true;
 }
 
 class MyApp extends StatelessWidget {

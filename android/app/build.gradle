@@ -28,8 +28,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        resValue "string", "google_maps_api_key", project.properties["google.maps.api.key"] ?: "YOUR_DEFAULT_API_KEY"
+        resValue "string", "google_maps_api_key", project.properties["google.maps.api.key"] ?: "AIzaSyBr3hQE4DvdH6bye1wJE4UM5YFG8KhDmAw"
     }
 
      buildFeatures {
