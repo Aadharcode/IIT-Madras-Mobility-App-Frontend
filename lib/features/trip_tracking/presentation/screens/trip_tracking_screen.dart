@@ -112,14 +112,29 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         );
 
         // Trigger specific function
+        if(!currentState.isActive){
         onMonumentChange(monuments);
+        }
+      }else if(currentState.isActive){
+        final bloc = context.read<TripBloc>();
+          bloc
+                            ..add(UpdateTripDetails(
+                              userId: widget.userId,
+                              vehicleType: null,
+                              purpose: null,
+                              occupancy: null,
+                              selectedMonuments: [],
+                              endMonument: currentState.previousMonument ?? monuments[1],
+                            ))
+                            ..add(EndTrip());
+
       }
     });
   }
 
   void onMonumentChange(List<Monument> monuments) {
     final currentState = BlocProvider.of<TripBloc>(context).state;
-    if(!currentState.isActive && currentState.currentMonument != null){
+    if(currentState.currentMonument != null){
       context.read<TripBloc>().add(
                       StartTrip(
                         userId: widget.userId,
