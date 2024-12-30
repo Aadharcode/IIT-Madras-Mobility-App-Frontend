@@ -75,10 +75,60 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           );
         }
       });
+      // Start tracking location after monuments are initialized
+    startLocationTracking(context, _monuments);
     } catch (e) {
       print("Error initializing monuments: $e");
     }
   }
+
+  void startLocationTracking(BuildContext context, List<Monument> monuments) {
+    Timer.periodic(Duration(seconds: 30), (_) async {
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final LatLng currentLocation = LatLng(position.latitude, position.longitude);
+
+      final Monument? nearestMonument =
+          await MonumentService.findNearestMonument(currentLocation);
+
+      if (nearestMonument == null) {
+        print('No nearby monument found.');
+        return;
+      }
+
+      final currentState = BlocProvider.of<TripBloc>(context).state;
+      final Monument? previousMonument = currentState.currentMonument;
+      final Monument? currentMonument = nearestMonument;
+
+      if (currentMonument != previousMonument) {
+        // Update state with new monuments
+        BlocProvider.of<TripBloc>(context).add(
+          TripUpdateMonumentEvent(
+            previousMonument: previousMonument,
+            currentMonument: currentMonument,
+          ),
+        );
+
+        // Trigger specific function
+        onMonumentChange(monuments);
+      }
+    });
+  }
+
+  void onMonumentChange(List<Monument> monuments) {
+    final currentState = BlocProvider.of<TripBloc>(context).state;
+    if(!currentState.isActive && currentState.currentMonument != null){
+      context.read<TripBloc>().add(
+                      StartTrip(
+                        userId: widget.userId,
+                        startMonument: currentState.currentMonument ?? monuments[1],
+                      ),
+                    );
+    }
+  }
+
 
   void _showMonumentDescription(
       BuildContext context, String name, String description) {

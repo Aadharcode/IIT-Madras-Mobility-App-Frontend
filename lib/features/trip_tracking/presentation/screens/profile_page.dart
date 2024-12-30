@@ -58,7 +58,8 @@ class _ProfilePageState extends State<ProfilePage> {
       if (token == null) return;
 
       final response = await http.head(
-        Uri.parse('https://temp-backend-mob.onrender.com/trip/getData'),
+        Uri.parse(
+            'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/trip/getData'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -85,7 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final response = await http.get(
-        Uri.parse('https://temp-backend-mob.onrender.com/trip/getData'),
+        Uri.parse(
+            'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/trip/getData'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'text/csv',

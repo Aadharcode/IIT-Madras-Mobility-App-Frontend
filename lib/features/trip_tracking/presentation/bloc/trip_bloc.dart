@@ -14,7 +14,7 @@ import '../../../authentication/data/services/auth_service.dart';
 import 'dart:convert';
 
 class TripBloc extends Bloc<TripEvent, TripState> {
-  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
+  static const String baseUrl = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
   final authService = AuthService();
   final LocationService _locationService;
   StreamSubscription<Position>? _locationSubscription;
@@ -39,6 +39,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<LoadPastTrips>(_onLoadPastTrips);
     on<CheckLocation>(_onCheckLocation);
     on<CheckNearbyMonument>(_onCheckNearbyMonument);
+    on<TripUpdateMonumentEvent>(_onUpdateTrip);
 
     _initializeLocationTracking();
   }
@@ -51,6 +52,17 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       error: null,
     ));
   }
+
+  void _onUpdateTrip(
+    TripUpdateMonumentEvent event,
+    Emitter<TripState> emit,
+  ) {
+    emit(state.copyWith(
+      currentMonument: event.currentMonument,
+      previousMonument: event.previousMonument,
+    ));
+  }
+
 
   void _onMonumentReached(
     MonumentReached event,

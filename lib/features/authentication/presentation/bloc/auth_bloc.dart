@@ -7,7 +7,8 @@ import 'dart:convert';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
-  static const String baseUrl = 'https://temp-backend-mob.onrender.com';
+  static const String baseUrl =
+      'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
 
   AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),

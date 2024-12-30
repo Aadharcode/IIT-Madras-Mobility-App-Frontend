@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/monument.dart';
 
 class MonumentService {
-  static const String _url = 'https://temp-backend-mob.onrender.com/monument';
+  static const String _url = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument';
   static const String _monumentKey = 'monuments';
 
   /// Fetch monuments from the API or local storage
