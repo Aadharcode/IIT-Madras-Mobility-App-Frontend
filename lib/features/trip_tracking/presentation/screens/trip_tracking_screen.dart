@@ -508,33 +508,39 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         );
         return;
       }
-
-      // Show confirmation dialog
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Start Trip'),
-          content: Text('Start trip from ${nearestMonument.name}?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<TripBloc>().add(
+      context.read<TripBloc>().add(
                       StartTrip(
                         userId: widget.userId,
                         startMonument: nearestMonument,
                       ),
                     );
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Start'),
-            ),
-          ],
-        ),
-      );
+
+      // Show confirmation dialog
+      // showDialog(
+      //   context: context,
+      //   builder: (dialogContext) => AlertDialog(
+      //     title: const Text('Start Trip'),
+      //     content: Text('Start trip from ${nearestMonument.name}?'),
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () => Navigator.of(dialogContext).pop(),
+      //         child: const Text('Cancel'),
+      //       ),
+      //       ElevatedButton(
+      //         onPressed: () {
+      //           context.read<TripBloc>().add(
+      //                 StartTrip(
+      //                   userId: widget.userId,
+      //                   startMonument: nearestMonument,
+      //                 ),
+      //               );
+      //           Navigator.of(dialogContext).pop();
+      //         },
+      //         child: const Text('Start'),
+      //       ),
+      //     ],
+      //   ),
+      // );
     } catch (e) {
       print('Error in _showStartDialog: $e');
       if (!mounted) return;
