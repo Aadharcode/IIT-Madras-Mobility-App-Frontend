@@ -25,6 +25,7 @@
     android:foregroundServiceType="location"
     android:enabled="true"
     android:exported="false" />
+            <service android:name="com.tekartik.workmanager.WorkManagerService" android:permission="android.permission.BIND_JOB_SERVICE"/>
             <service 
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="location"

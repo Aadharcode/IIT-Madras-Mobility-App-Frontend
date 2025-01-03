@@ -15,35 +15,12 @@ import 'features/trip_tracking/data/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io' show Platform;
 import 'package:permission_handler/permission_handler.dart';
+
 void main() async {
-
-
-
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Request notification permission for Android 13 and above
-  if (Platform.isAndroid) {
-    final notificationPermission = await Permission.notification.status;
-    if (notificationPermission.isDenied) {
-      await Permission.notification.request();
-    }
-  }
-
-
-  await BackgroundService.initializeService();
-  await NotificationService.initialize();
-    final hasPermission = await requestExactAlarmPermission();
-  if (hasPermission) {
-    await NotificationService.scheduleNightlyCheck();
-  }
-  await NotificationService.scheduleNightlyCheck();
-  // Request exact alarm permission before scheduling
-    // ErrorWidget.builder = (FlutterErrorDetails details) {
+  await NotificationService.initialize(); // Initialize notification service
+  await NotificationService.registerWorkManager(); // Register background task
   runApp(const MyApp());
-  // return Scaffold(
-  //   body: Text("There is some error"),
-  // );
-  //   };
 }
 
 Future<bool> requestExactAlarmPermission() async {
