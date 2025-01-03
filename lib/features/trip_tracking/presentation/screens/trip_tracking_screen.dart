@@ -100,9 +100,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
 
       final currentState = BlocProvider.of<TripBloc>(context).state;
       final Monument? previousMonument = currentState.currentMonument;
-      final Monument? currentMonument = nearestMonument;
+      final Monument currentMonument = nearestMonument;
 
-      if (currentMonument != previousMonument) {
+      if (currentMonument != previousMonument && previousMonument!= null) {
         // Update state with new monuments
         BlocProvider.of<TripBloc>(context).add(
           TripUpdateMonumentEvent(
@@ -134,11 +134,12 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
 
   void onMonumentChange(List<Monument> monuments) {
     final currentState = BlocProvider.of<TripBloc>(context).state;
-    if(currentState.currentMonument != null){
+    final Monument? monument = currentState.currentMonument;
+    if(monument != null){
       context.read<TripBloc>().add(
                       StartTrip(
                         userId: widget.userId,
-                        startMonument: currentState.currentMonument ?? monuments[1],
+                        startMonument: monument,
                       ),
                     );
     }
