@@ -29,7 +29,7 @@ class NotificationService {
       now.month,
       now.day,
       21, // 9 PM
-      57,
+      00,
     );
 
     if (now.isAfter(scheduledTime)) {

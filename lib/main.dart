@@ -38,8 +38,12 @@ void main() async {
   }
   await NotificationService.scheduleNightlyCheck();
   // Request exact alarm permission before scheduling
-
+    // ErrorWidget.builder = (FlutterErrorDetails details) {
   runApp(const MyApp());
+  // return Scaffold(
+  //   body: Text("There is some error"),
+  // );
+  //   };
 }
 
 Future<bool> requestExactAlarmPermission() async {
