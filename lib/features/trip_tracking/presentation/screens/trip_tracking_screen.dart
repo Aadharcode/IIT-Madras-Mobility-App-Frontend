@@ -116,6 +116,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         onMonumentChange(monuments);
         }
       }else if(currentState.isActive){
+        if(previousMonument != null){
         final bloc = context.read<TripBloc>();
           bloc
                             ..add(UpdateTripDetails(
@@ -124,10 +125,11 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                               purpose: null,
                               occupancy: null,
                               selectedMonuments: [],
-                              endMonument: currentState.previousMonument ?? monuments[1],
+                              endMonument: previousMonument,
                             ))
                             ..add(EndTrip());
 
+      }
       }
     });
   }

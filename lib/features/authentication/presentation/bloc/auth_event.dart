@@ -34,19 +34,37 @@ class VerifyOTP extends AuthEvent {
 }
 
 class UpdateUserProfile extends AuthEvent {
-  final UserCategory userCategory;
-  final ResidenceType residenceType;
+  final UserCategory? userCategory;
+  final ResidenceType? residenceType;
+  final EmploymentType? employmentType;
+  final EmploymentCategory? employmentCategory;
+  final List<int>? childrenDetails;
+  final Gender? gender;
+  final int? age;
   final BuildContext context;
 
   const UpdateUserProfile({
-    required this.userCategory,
-    required this.residenceType,
-     required this.context,
+    this.userCategory,
+    this.age,
+    this.residenceType,
+    this.gender,
+    this.employmentType,
+    this.employmentCategory,
+    this.childrenDetails,
+    required this.context,
   });
 
   @override
-  List<Object> get props => [userCategory, residenceType];
+  List<Object?> get props => [
+        userCategory,
+        residenceType,
+        gender,
+        employmentType,
+        employmentCategory,
+        childrenDetails,
+      ];
 }
+
 
 class SignOut extends AuthEvent {}
 

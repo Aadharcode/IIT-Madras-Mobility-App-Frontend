@@ -82,70 +82,99 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onUpdateUserProfile(
-    UpdateUserProfile event,
-    Emitter<AuthState> emit,
-  ) async {
-    try {
-      emit(state.copyWith(isLoading: true, error: null));
-      print('🔄 Starting user profile update...');
+  UpdateUserProfile event,
+  Emitter<AuthState> emit,
+) async {
+  try {
+    emit(state.copyWith(isLoading: true, error: null));
+    print('🔄 Starting user profile update...');
 
-      String userCategoryString = enumToString(event.userCategory);
-      String residenceTypeString = enumToString(event.residenceType);
-      print(
-          '📋 User category: $userCategoryString, Residence type: $residenceTypeString');
+    final token = await _authService.getToken();
+    if (token == null) {
+      print('❌ No token found!');
+      throw Exception('No token found');
+    }
+    print('🔑 Token retrieved successfully.');
 
-      final token = await _authService.getToken();
-      if (token == null) {
-        print('❌ No token found!');
-        throw Exception('No token found');
-      }
-      print('🔑 Token retrieved successfully.');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
 
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
+    // Prepare dynamic request body
+    final body = <String, dynamic>{};
+    final userCategory = event.userCategory;
+    final residenceType = event.residenceType;
+    final employmentType = event.employmentType;
+    final employmentCategory = event.employmentCategory;
+    final gender = event.gender;
+    final age = event.age;
 
-      final body = json.encode({
-        'category': userCategoryString,
-        'residenceType': residenceTypeString,
-      });
-      print('📤 Request body: ${json.encode(body)}');
+    if (userCategory != null) {
+      body['category'] = enumToString(userCategory);
+    }
+    if (gender != null) {
+      body['gender'] = enumToString(gender);
+    }
+    if (residenceType != null) {
+      body['residenceType'] = enumToString(residenceType);
+    }
+    if (employmentType != null) {
+      body['employmentType'] = enumToString(employmentType);
+    }
+    if (employmentCategory != null) {
+      body['employmentCategory'] = enumToString(employmentCategory);
+    }
+    if (age != null) {
+      body['age'] = age;
+    }
+    if (event.childrenDetails != null) {
+      body['childrenDetails'] = event.childrenDetails;
+    }
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/user/login/details'),
-        headers: headers,
-        body: body,
-      );
-      print('📬 Response status code: ${response.statusCode}');
+    print('📤 Request body: ${json.encode(body)}');
 
-      if (response.statusCode == 200) {
-        final user = json.decode(response.body);
-        print('✅ Profile update successful: $user');
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/login/details'),
+      headers: headers,
+      body: json.encode(body),
+    );
 
-        emit(state.copyWith(
-          isLoading: false,
-          userCategory: event.userCategory,
-          residenceType: event.residenceType,
-          isAuthenticated: true,
-          error: null,
-        ));
+    print('📬 Response status code: ${response.statusCode}');
 
-        print(
-            '🎉 State updated with: ${state.userCategory}, ${state.residenceType}, ${state.isAuthenticated}');
-      } else {
-        final error = json.decode(response.body);
-        print('⚠️ Profile update failed with error: ${error['msg']}');
-        throw Exception(error['msg']);
-      }
-    } catch (e) {
-      print('🚨 Error occurred: $e');
+    if (response.statusCode == 200) {
+      final user = json.decode(response.body);
+      print('✅ Profile update successful: $user');
+
       emit(state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        userCategory: event.userCategory ?? state.userCategory,
+        residenceType: event.residenceType ?? state.residenceType,
+        employmentType: event.employmentType ?? state.employmentType,
+        gender: event.gender ?? state.gender,
+        age: event.age ?? state.age,
+        employmentCategory: event.employmentCategory ?? state.employmentCategory,
+        childrenDetails: event.childrenDetails ?? state.childrenDetails,
+        isAuthenticated: true,
+        error: null,
       ));
+
+      print(
+          '🎉 State updated with: ${state.userCategory}, ${state.residenceType}, ${state.employmentType}, ${state.employmentCategory}, ${state.childrenDetails}, ${state.isAuthenticated}');
+    } else {
+      final error = json.decode(response.body);
+      print('⚠️ Profile update failed with error: ${error['msg']}');
+      throw Exception(error['msg']);
     }
+  } catch (e) {
+    print('🚨 Error occurred: $e');
+    emit(state.copyWith(
+      isLoading: false,
+      error: e.toString(),
+    ));
   }
+}
+
 
   Future<void> _onSignOut(
     SignOut event,
