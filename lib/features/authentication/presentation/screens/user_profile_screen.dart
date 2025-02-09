@@ -18,6 +18,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   UserCategory? _selectedCategory;
   Gender? _selectedGenderCategory;
   ResidenceType? _selectedResidence;
+  int? _ageController;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +105,27 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Please enter your age:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter your age',
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _ageController = int.tryParse(value);
+                    });
+                  },
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Please select your Gender:',
@@ -163,6 +185,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                         userCategory: _selectedCategory!,
                                         gender: _selectedGenderCategory!,
                                         residenceType: _selectedResidence!,
+                                        age: _ageController!,
                                         context: context,
                                       ),
                                     );

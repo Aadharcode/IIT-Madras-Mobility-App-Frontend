@@ -32,7 +32,7 @@ class _ChildrenDetailsScreenState extends State<ChildrenDetailsScreen> {
             child: BlocConsumer<AuthBloc, AuthState>(
               listener: (context, state) {
                 // Handle navigation when childrenDetails is successfully updated
-                if (state.childrenDetails != null && state.childrenDetails!.isNotEmpty) {
+                if (state.childrenDetails != null ) {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (_) => TripTrackingScreen(userId: state.userId ?? ''),

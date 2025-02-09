@@ -25,15 +25,16 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
+           print(' 📬 $state.employmentCategory, $state.employmentType, $state.error');
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error!)),
             );
-          }
+          };
+          print(' 📬 $state.employmentCategory, $state.employmentType,');
           if (state.employmentCategory != null &&
               state.employmentType!= null &&
               state.isAuthenticated) {
-                }
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => TripTrackingScreen(
@@ -41,6 +42,7 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
                 ),
               ),
             );
+                }
           },
         builder: (context, state) {
           return SingleChildScrollView(

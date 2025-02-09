@@ -9,6 +9,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
   static const String baseUrl =
       'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
+      // 'http://192.168.10.250:3000/';
 
   AuthBloc({AuthService? authService})
       : _authService = authService ?? AuthService(),
