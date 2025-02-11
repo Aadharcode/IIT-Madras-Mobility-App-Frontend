@@ -4,6 +4,8 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
+import '../../../authentication/presentation/screens/user_profile_screen.dart';
+import 'user_profile_screen.dart';
 
 class EmploymentScreen extends StatefulWidget {
   const EmploymentScreen({super.key});
@@ -22,18 +24,30 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
       appBar: AppBar(
         title: const Text('Complete Profile'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => const UserProfileScreen(),
+              ),
+            );
+          },
+        ),
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-           print(' 📬 $state.employmentCategory, $state.employmentType, $state.error');
+          print(
+              ' 📬 $state.employmentCategory, $state.employmentType, $state.error');
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error!)),
             );
-          };
+          }
+          ;
           print(' 📬 $state.employmentCategory, $state.employmentType,');
           if (state.employmentCategory != null &&
-              state.employmentType!= null &&
+              state.employmentType != null &&
               state.isAuthenticated) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -42,8 +56,8 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
                 ),
               ),
             );
-                }
-          },
+          }
+        },
         builder: (context, state) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -135,6 +149,7 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
         return 'Other';
     }
   }
+
   String _getGenderTitle(EmploymentType category) {
     switch (category) {
       case EmploymentType.contract:
