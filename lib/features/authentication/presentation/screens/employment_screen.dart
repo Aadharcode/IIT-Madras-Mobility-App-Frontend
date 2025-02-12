@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -24,17 +25,22 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
         centerTitle: true,
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-           print(' 📬 $state.employmentCategory, $state.employmentType, $state.error');
+        listener: (context, state) async {
+          print('📬 ${state.employmentCategory}, ${state.employmentType}, ${state.error}');
+          
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error!)),
             );
-          };
-          print(' 📬 $state.employmentCategory, $state.employmentType,');
+          }
+
           if (state.employmentCategory != null &&
-              state.employmentType!= null &&
+              state.employmentType != null &&
               state.isAuthenticated) {
+            
+            // Store values in SharedPreferences before navigating
+            await _storeEmploymentDetails(state.employmentCategory!, state.employmentType!);
+
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => TripTrackingScreen(
@@ -42,8 +48,8 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
                 ),
               ),
             );
-                }
-          },
+          }
+        },
         builder: (context, state) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -81,7 +87,7 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
                 const SizedBox(height: 16),
                 ...EmploymentType.values.map(
                   (category) => RadioListTile<EmploymentType>(
-                    title: Text(_getGenderTitle(category)),
+                    title: Text(_getEmploymentTypeTitle(category)),
                     value: category,
                     groupValue: _selectedResidence,
                     onChanged: (value) {
@@ -121,6 +127,13 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
     );
   }
 
+  // Store employment details in SharedPreferences
+  Future<void> _storeEmploymentDetails(EmploymentCategory category, EmploymentType type) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('employment_category', category.toString());
+    await prefs.setString('employment_type', type.toString());
+  }
+
   String _getCategoryTitle(EmploymentCategory category) {
     switch (category) {
       case EmploymentCategory.admin:
@@ -135,7 +148,8 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
         return 'Other';
     }
   }
-  String _getGenderTitle(EmploymentType category) {
+
+  String _getEmploymentTypeTitle(EmploymentType category) {
     switch (category) {
       case EmploymentType.contract:
         return 'Contract';

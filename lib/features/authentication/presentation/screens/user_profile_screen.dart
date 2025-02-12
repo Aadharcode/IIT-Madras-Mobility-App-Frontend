@@ -44,6 +44,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       "residenceType = ${state.residenceType}, "
       "isAuthenticated = ${state.isAuthenticated}");
 
+      if (state.employmentCategory != null &&
+              state.employmentType != null &&
+              state.isAuthenticated) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => TripTrackingScreen(
+                  userId: state.userId ?? '',
+                ),
+              ),
+            );
+          }
+
+          if (state.childrenDetails != null) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => TripTrackingScreen(userId: state.userId ?? ''),
+                  ),
+                );
+              }
+
   if (state.userCategory != null &&
       state.gender != null &&
       state.residenceType != null &&
