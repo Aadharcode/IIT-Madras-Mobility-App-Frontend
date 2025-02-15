@@ -19,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<UpdateUserProfile>(_onUpdateUserProfile);
     on<SignOut>(_onSignOut);
     on<LogoutEvent>(_onLogoutEvent);
+    // on<LoginEvent>(_onLogin);
     on<CheckAuthStatus>(_onCheckAuthStatus);
   }
 
@@ -80,6 +81,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
+  }
+  Future<void> _onLogin(
+    
+  ) async {
+   
   }
 
   Future<void> _onUpdateUserProfile(

@@ -22,6 +22,9 @@ class SendPhoneNumberVerification extends AuthEvent {
 class LogoutEvent extends AuthEvent {
   const LogoutEvent();
 }
+class LoginEvent extends AuthEvent {
+  const LoginEvent();
+}
 
 class VerifyOTP extends AuthEvent {
   final String otp;

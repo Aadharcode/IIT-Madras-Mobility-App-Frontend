@@ -414,6 +414,19 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                 },
                                 child: const Text('Get OTP'),
                               ),
+                              // ElevatedButton(
+                              //   onPressed: () {
+                              //     if (_formKey.currentState!.validate()) {
+                              //       context.read<AuthBloc>().onLogin(
+                              //             SendPhoneNumberVerification(
+                              //               _phoneController.text,
+                              //               _nameController.text,
+                              //             ),
+                              //           );
+                              //     }
+                              //   },
+                              //   child: const Text('Login'),
+                              // ),
                           ],
                         ),
                       ),
