@@ -6,7 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import '../models/monument.dart';
 
 class MonumentService {
-  static const String _url = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument';
+  static const String _url =
+      'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument';
   static const String _monumentKey = 'monuments';
 
   /// Fetch monuments from the API or local storage
@@ -27,7 +28,7 @@ class MonumentService {
             item['lat'] as double,
             item['long'] as double,
           ),
-          radius: 50.0,
+          radius: 200.0,
           description: null,
         );
       }).toList();
@@ -57,9 +58,8 @@ class MonumentService {
               item['lat'] as double,
               item['long'] as double,
             ),
-            radius:
-                50.0, // Use a default radius since the backend doesn't provide one
-            description: null, // Optional field not provided by the backend
+            radius: 200.0,
+            description: null,
           );
         }).toList();
       } else {
@@ -85,8 +85,8 @@ class MonumentService {
               item['lat'] as double,
               item['long'] as double,
             ),
-            radius: 50.0, // Use a default radius for local data as well
-            description: null, // Optional field
+            radius: 100.0,
+            description: null,
           );
         }).toList();
       }

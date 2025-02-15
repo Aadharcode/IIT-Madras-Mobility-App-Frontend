@@ -15,7 +15,7 @@ class Monument extends Equatable {
     required this.id,
     required this.name,
     required this.position,
-    this.radius = 50,
+    this.radius = 100,
     this.description,
   });
 
@@ -35,7 +35,7 @@ class Monument extends Equatable {
       id: json['id'],
       name: json['name'],
       position: LatLng(json['latitude'], json['longitude']),
-      radius: json['radius'] ?? 50,
+      radius: json['radius'] ?? 100,
       description: json['description'],
     );
   }
@@ -66,7 +66,8 @@ List<Monument> sampleMonuments = [];
 
 // Fetch monuments from API and update sampleMonuments
 Future<void> fetchMonuments() async {
-  const url = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument/';
+  const url =
+      'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/monument/';
 
   try {
     final response = await http.get(Uri.parse(url));
