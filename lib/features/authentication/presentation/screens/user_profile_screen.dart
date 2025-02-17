@@ -74,14 +74,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       print("💼 User is an Employee, navigating to EmploymentScreen");
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => EmploymentScreen(),
-        ),
-      );
-    } else if (state.userCategory == UserCategory.parent) {
-      print("👨‍👩‍👧 User is a Parent, navigating to ChildrenDetailsScreen");
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ChildrenDetailsScreen(),
+          builder: (_) => const EmploymentScreen(),
         ),
       );
     } else {

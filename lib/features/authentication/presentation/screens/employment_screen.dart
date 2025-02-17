@@ -5,8 +5,10 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
+import '../../../authentication/presentation/screens/user_profile_screen.dart';
+import 'user_profile_screen.dart';
 
-class EmploymentScreen extends StatefulWidget {
+class EmploymentScreen extends StatefulWidget{
   const EmploymentScreen({super.key});
 
   @override
@@ -23,6 +25,16 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
       appBar: AppBar(
         title: const Text('Complete Profile'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => const UserProfileScreen(),
+              ),
+            );
+          },
+        ),
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) async {
@@ -35,6 +47,7 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
           }
 
           if (state.employmentCategory != null &&
+              state.employmentType != null &&
               state.employmentType != null &&
               state.isAuthenticated) {
             
@@ -49,7 +62,7 @@ class _EmploymentScreenState extends State<EmploymentScreen> {
               ),
             );
           }
-        },
+        },  
         builder: (context, state) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),

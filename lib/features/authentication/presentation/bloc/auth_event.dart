@@ -23,7 +23,8 @@ class LogoutEvent extends AuthEvent {
   const LogoutEvent();
 }
 class LoginEvent extends AuthEvent {
-  const LoginEvent();
+  final String phoneNumber;
+  const LoginEvent(this.phoneNumber);
 }
 
 class VerifyOTP extends AuthEvent {
