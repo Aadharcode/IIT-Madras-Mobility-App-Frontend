@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 import '../../../authentication/presentation/bloc/auth_event.dart';
-// import '../../../authentication/presentation/bloc/auth_state.dart';
+import '../../../authentication/presentation/bloc/auth_state.dart';
 import '../../../../main.dart';
 import '../../../authentication/data/services/auth_service.dart';
 import 'package:http/http.dart' as http;
@@ -34,12 +34,33 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserProfile() async {
     try {
-      setState(() {
-        isLoading = true;
-      });
+      final token = await authService.getToken();
+      if (token == null) {
+        print("No token found, fetching data from AuthState");
+        final authState = context.read<AuthBloc>().state;
+        if (authState.isAuthenticated) {
+          setState(() {
+            userProfile = {
+              'number': authState.phoneNumber,
+              'category': authState.userCategory,
+              'residentType': authState.residenceType,
+              'age': authState.age,
+              'gender': authState.gender,
+              'employmentCategory': authState.employmentCategory,
+              'employmentType': authState.employmentType,
+            };
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+            errorMessage = 'User not authenticated';
+          });
+        }
+        return;
+      }
 
       final profile = await authService.getUserProfile();
-
       setState(() {
         userProfile = profile;
         isLoading = false;
@@ -72,55 +93,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       print('Error checking data access: $e');
-    }
-  }
-
-  Future<void> _downloadTripData() async {
-    try {
-      final token = await authService.getToken();
-      if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication error')),
-        );
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse(
-            'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api/trip/getData'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'text/csv',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Get temporary directory
-        final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/trip_data.csv';
-
-        // Write the CSV data to a file
-        final file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
-
-        // Share the file
-        await Share.shareXFiles(
-          [XFile(filePath)],
-          subject: 'Trip Data',
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('CSV file ready to share')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to download data')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
     }
   }
 
@@ -196,37 +168,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Card(
-                          shape: theme.cardTheme.shape,
-                          elevation: theme.cardTheme.elevation,
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Residence Type",
-                                  style: theme.textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  userProfile?['residentType'] ??
-                                      'Not Specified',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                       if (canDownloadData) ...[
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: _downloadTripData,
+                          onPressed: _checkDataAccess,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
                             minimumSize: const Size(double.infinity, 50),
