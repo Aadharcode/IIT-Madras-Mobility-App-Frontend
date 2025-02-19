@@ -134,7 +134,7 @@ class AuthenticationWrapper extends StatelessWidget {
             print(
                 '✅ Navigating to TripTrackingScreen with userId: ${state.userId}');
             return TripTrackingScreen(userId: state.userId!);
-          }curs
+          }
           // Only check for profile completion if it's not a login flow
           if (!state.isLoginFlow &&
               (state.userCategory == null || state.residenceType == null)) {
