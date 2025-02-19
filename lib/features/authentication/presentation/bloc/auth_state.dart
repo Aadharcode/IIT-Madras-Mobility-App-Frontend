@@ -1,9 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-enum UserCategory { student, employee , parent, relative}
+enum UserCategory { student, employee, parent, relative }
+
 enum ResidenceType { onCampus, offCampus }
-enum Gender {male, female, nonBinary, noReveal }
+
+enum Gender { male, female, nonBinary, noReveal }
+
 enum EmploymentType { permanent, contract, intern }
+
 enum EmploymentCategory { technical, research, admin, school, other }
 
 class AuthState extends Equatable {
@@ -19,6 +23,7 @@ class AuthState extends Equatable {
   final List<int>? childrenDetails;
   final String? error;
   final bool isLoading;
+  final bool isLoginFlow;
 
   const AuthState({
     this.isAuthenticated = false,
@@ -33,6 +38,7 @@ class AuthState extends Equatable {
     this.childrenDetails,
     this.error,
     this.isLoading = false,
+    this.isLoginFlow = false,
   });
 
   AuthState copyWith({
@@ -48,6 +54,7 @@ class AuthState extends Equatable {
     List<int>? childrenDetails,
     String? error,
     bool? isLoading,
+    bool? isLoginFlow,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -62,6 +69,7 @@ class AuthState extends Equatable {
       childrenDetails: childrenDetails ?? this.childrenDetails,
       error: error ?? this.error,
       isLoading: isLoading ?? this.isLoading,
+      isLoginFlow: isLoginFlow ?? this.isLoginFlow,
     );
   }
 
@@ -79,5 +87,6 @@ class AuthState extends Equatable {
         childrenDetails,
         error,
         isLoading,
+        isLoginFlow,
       ];
 }

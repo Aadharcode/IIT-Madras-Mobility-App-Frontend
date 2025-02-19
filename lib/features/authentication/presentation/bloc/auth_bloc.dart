@@ -41,151 +41,97 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
     }
   }
- Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {
-  try {
-    emit(state.copyWith(isLoading: true, error: null));
-    print("Emitting state: ${state.copyWith(isLoading: true, error: null)}");
 
-    final body = {'number': event.phoneNumber};
-    print("Request URL: ${Uri.parse('$baseUrl/user/directLogin')}");
-    print("Request Body: $body");
+  Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(state.copyWith(isLoading: true, error: null, isLoginFlow: true));
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/user/directLogin'),
-      body: json.encode(body),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    print("Response: ${response.statusCode}");
-    print("Response Body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      print("Decoded Response Data: $responseData");
-
-      if (responseData.isNotEmpty) {
-        final user = responseData[0];
-
-        print("User Data: $user");
-        print("User ID Type: ${user['_id'].runtimeType}");
-        print("User ID: ${user['_id']}");
-
-        final newState = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          phoneNumber: user['number'].toString(),
-          userId: user['_id'],
-          gender: _parseGender(user['gender']),
-          age: user['age'],
-          userCategory: _parseUserCategory(user['category']),
-          residenceType: _parseResidenceType(user['residentType']),
-          employmentType: _parseEmploymentType(user['employmentType']),
-          employmentCategory: _parseEmploymentCategory(user['employmentCategory']),
-          childrenDetails: user['childrenDetails'].cast<int>() ?? [],
-        );
-
-        emit(newState);
-        print("Emitting state: $newState");
-      } else {
-        final newState = state.copyWith(
-          isLoading: false,
-          error: "User not found",
-        );
-        emit(newState);
-        print("Emitting state: $newState");
-      }
-    } else {
-      final newState = state.copyWith(
+      // Use the existing sendOtp method but mark it as login flow
+      await _authService.sendOtp(event.phoneNumber);
+      emit(state.copyWith(
         isLoading: false,
-        error: "Login failed: ${response.body}",
-      );
-      emit(newState);
-      print("Emitting state: $newState");
+        phoneNumber: event.phoneNumber,
+        isLoginFlow: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+        isLoginFlow: false,
+      ));
     }
-  } catch (e) {
-    print("Error: $e");
-    final newState = state.copyWith(
-      isLoading: false,
-      error: "An error occurred: ${e.toString()}",
-    );
-    emit(newState);
-    print("Emitting state: $newState");
   }
-}
 
-
-Gender? _parseGender(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'male':
-      return Gender.male;
-    case 'female':
-      return Gender.female;
-    case 'nonbinary':
-      return Gender.nonBinary;
-    case 'noreveal':
-      return Gender.noReveal;
-    default:
-      return null;
+  Gender? _parseGender(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'male':
+        return Gender.male;
+      case 'female':
+        return Gender.female;
+      case 'nonbinary':
+        return Gender.nonBinary;
+      case 'noreveal':
+        return Gender.noReveal;
+      default:
+        return null;
+    }
   }
-}
 
-UserCategory? _parseUserCategory(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'student':
-      return UserCategory.student;
-    case 'employee':
-      return UserCategory.employee;
-    case 'parent':
-      return UserCategory.parent;
-    case 'relative':
-      return UserCategory.relative;
-    default:
-      return null;
+  UserCategory? _parseUserCategory(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'student':
+        return UserCategory.student;
+      case 'employee':
+        return UserCategory.employee;
+      case 'parent':
+        return UserCategory.parent;
+      case 'relative':
+        return UserCategory.relative;
+      default:
+        return null;
+    }
   }
-}
 
-ResidenceType? _parseResidenceType(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'oncampus':
-      return ResidenceType.onCampus;
-    case 'offcampus':
-      return ResidenceType.offCampus;
-    default:
-      return null;
+  ResidenceType? _parseResidenceType(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'oncampus':
+        return ResidenceType.onCampus;
+      case 'offcampus':
+        return ResidenceType.offCampus;
+      default:
+        return null;
+    }
   }
-}
 
-EmploymentType? _parseEmploymentType(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'permanent':
-      return EmploymentType.permanent;
-    case 'contract':
-      return EmploymentType.contract;
-    case 'intern':
-      return EmploymentType.intern;
-    default:
-      return null;
+  EmploymentType? _parseEmploymentType(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'permanent':
+        return EmploymentType.permanent;
+      case 'contract':
+        return EmploymentType.contract;
+      case 'intern':
+        return EmploymentType.intern;
+      default:
+        return null;
+    }
   }
-}
 
-EmploymentCategory? _parseEmploymentCategory(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'technical':
-      return EmploymentCategory.technical;
-    case 'research':
-      return EmploymentCategory.research;
-    case 'admin':
-      return EmploymentCategory.admin;
-    case 'school':
-      return EmploymentCategory.school;
-    case 'other':
-      return EmploymentCategory.other;
-    default:
-      return null;
+  EmploymentCategory? _parseEmploymentCategory(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'technical':
+        return EmploymentCategory.technical;
+      case 'research':
+        return EmploymentCategory.research;
+      case 'admin':
+        return EmploymentCategory.admin;
+      case 'school':
+        return EmploymentCategory.school;
+      case 'other':
+        return EmploymentCategory.other;
+      default:
+        return null;
+    }
   }
-}
-
-
 
   Future<void> _onVerifyOTP(
     VerifyOTP event,

@@ -54,9 +54,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           }
           if (state.isAuthenticated) {
             print('✅ Authentication successful - navigating to profile screen');
-            if (state.userCategory != null && state.residenceType != null) {
+            if (state.isLoginFlow ||
+                (state.userCategory != null && state.residenceType != null)) {
               print(
-                  '👤 User profile already complete - navigating to trip tracking');
+                  '👤 User profile already complete or login flow - navigating to trip tracking');
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => TripTrackingScreen(userId: state.userId!),

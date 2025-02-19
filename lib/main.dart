@@ -134,10 +134,16 @@ class AuthenticationWrapper extends StatelessWidget {
             print(
                 '✅ Navigating to TripTrackingScreen with userId: ${state.userId}');
             return TripTrackingScreen(userId: state.userId!);
-          }
-          if (state.userCategory == null || state.residenceType == null) {
+          }curs
+          // Only check for profile completion if it's not a login flow
+          if (!state.isLoginFlow &&
+              (state.userCategory == null || state.residenceType == null)) {
             print('⚠️ Missing profile info - redirecting to UserProfileScreen');
             return const UserProfileScreen();
+          }
+          // If it's a login flow, go directly to trip tracking
+          if (state.isLoginFlow) {
+            return TripTrackingScreen(userId: state.userId ?? '');
           }
         }
         print('🔄 Showing PhoneAuthScreen - not authenticated');
@@ -466,7 +472,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               MaterialPageRoute(
                 builder: (_) => OTPVerificationScreen(
                   phoneNumber: state.phoneNumber!,
-                  name: _nameController.text,
+                  name: state.isLoginFlow ? '' : _nameController.text,
                 ),
               ),
             );
@@ -602,23 +608,39 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                 },
                                 child: const Text('Get OTP'),
                               ),
-
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    context.read<AuthBloc>().add(
-                                          LoginEvent(
-                                            _phoneController.text,
-                                          ),
-                                        );
-                                  }
-                                },
-                                child: const Text('Login'),
-                              ),
                           ],
                         ),
                       ),
                     const SizedBox(height: 16),
+                    if (_hasConsent == true)
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Already have an account?'),
+                            TextButton(
+                              onPressed: () {
+                                if (_phoneController.text.isNotEmpty &&
+                                    _phoneController.text.length == 10) {
+                                  context.read<AuthBloc>().add(
+                                        LoginEvent(
+                                          _phoneController.text,
+                                        ),
+                                      );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Please enter a valid phone number'),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Login'),
+                            ),
+                          ],
+                        ),
+                      ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
