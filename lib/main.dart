@@ -461,7 +461,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               ),
             );
           }
-          if (state.phoneNumber != null) {
+          if (state.phoneNumber != null && state.isAuthenticated == false) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => OTPVerificationScreen(

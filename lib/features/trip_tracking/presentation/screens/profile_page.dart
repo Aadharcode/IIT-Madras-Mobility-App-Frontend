@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        "Name: ${userProfile?['name'] ?? 'Not Available'}",
+                        "age: ${userProfile?['age'] ?? 'Not Available'}",
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 5),
@@ -148,24 +148,24 @@ class _ProfilePageState extends State<ProfilePage> {
                           shape: theme.cardTheme.shape,
                           elevation: theme.cardTheme.elevation,
                           margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Category",
-                                  style: theme.textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  userProfile?['category'] ?? 'Not Specified',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
+                          // child: Padding(
+                          //   padding: const EdgeInsets.all(16),
+                            // child: Column(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                              //children: [
+                                // Text(
+                                //   "Category",
+                                //   style: theme.textTheme.titleMedium
+                                //       ?.copyWith(fontWeight: FontWeight.bold),
+                                // ),
+                                // const SizedBox(height: 8),
+                                // Text(
+                                //   userProfile?['gender'] ?? 'Not Specified',
+                                //   style: theme.textTheme.bodyMedium,
+                                // ),
+                              //],
+                            //),
+                          //),
                         ),
                       ),
                       if (canDownloadData) ...[
