@@ -30,22 +30,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-  print("👂 Listener triggered!");
+          print("👂 Listener triggered!");
 
-  if (state.error != null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(state.error!)),
-    );
-    print("❌ Error encountered: ${state.error}");
-  }
+          if (state.error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.error!)),
+            );
+            print("❌ Error encountered: ${state.error}");
+          }
 
-  print("📊 State values: "
-      "userCategory = ${state.userCategory}, "
-      "gender = ${state.gender}, "
-      "residenceType = ${state.residenceType}, "
-      "isAuthenticated = ${state.isAuthenticated}");
+          print("📊 State values: "
+              "userCategory = ${state.userCategory}, "
+              "gender = ${state.gender}, "
+              "residenceType = ${state.residenceType}, "
+              "isAuthenticated = ${state.isAuthenticated}");
 
-      if (state.employmentCategory != null &&
+          if (state.employmentCategory != null &&
               state.employmentType != null &&
               state.isAuthenticated) {
             Navigator.of(context).pushReplacement(
@@ -58,41 +58,49 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           }
 
           if (state.childrenDetails != null) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => TripTrackingScreen(userId: state.userId ?? ''),
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => TripTrackingScreen(userId: state.userId ?? ''),
+              ),
+            );
+          }
+
+          if (state.userCategory != null &&
+              state.gender != null &&
+              state.residenceType != null &&
+              state.isAuthenticated) {
+            print("✅ All conditions met! Navigating...");
+
+            if (state.userCategory == UserCategory.employee) {
+              print("💼 User is an Employee, navigating to EmploymentScreen");
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const EmploymentScreen(),
+                ),
+              );
+            } else if (state.userCategory == UserCategory.parent) {
+              print(
+                  "👨‍👩‍👧‍👦 User is a Parent, navigating to ChildrenDetailsScreen");
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const ChildrenDetailsScreen(),
+                ),
+              );
+            } else {
+              print("🗺️ User is navigating to TripTrackingScreen");
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => TripTrackingScreen(
+                    userId: state.userId ?? '',
                   ),
-                );
-              }
-
-  if (state.userCategory != null &&
-      state.gender != null &&
-      state.residenceType != null &&
-      state.isAuthenticated) {
-    print("✅ All conditions met! Navigating...");
-
-    if (state.userCategory == UserCategory.employee) {
-      print("💼 User is an Employee, navigating to EmploymentScreen");
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const EmploymentScreen(),
-        ),
-      );
-    } else {
-      print("🗺️ User is navigating to TripTrackingScreen");
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => TripTrackingScreen(
-            userId: state.userId ?? '',
-          ),
-        ),
-      );
-    }
-  } else {
-    print("⚠️ Navigation block not triggered: Missing required fields.");
-  }
-},
-
+                ),
+              );
+            }
+          } else {
+            print(
+                "⚠️ Navigation block not triggered: Missing required fields.");
+          }
+        },
         builder: (context, state) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -252,6 +260,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         return 'Relative';
     }
   }
+
   String _getGenderTitle(Gender category) {
     switch (category) {
       case Gender.male:

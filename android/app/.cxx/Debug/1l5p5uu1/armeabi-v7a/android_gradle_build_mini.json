@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Volumes/prakashssd/flutter/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Volumes/prakashssd/android/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Volumes/prakashssd/Github/IIT-Madras-Mobility-App-Frontend/android/app/.cxx/Debug/1l5p5uu1/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Volumes/prakashssd/android/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Volumes/prakashssd/Github/IIT-Madras-Mobility-App-Frontend/android/app/.cxx/Debug/1l5p5uu1/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

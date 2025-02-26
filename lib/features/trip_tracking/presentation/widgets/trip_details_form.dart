@@ -227,7 +227,7 @@ class _TripDetailsFormState extends State<TripDetailsForm> {
                           );
                         }
                       },
-                      child: const Text('Skip Details'),
+                      child: const Text('Fill details later'),
                     ),
                   ),
                 ],
