@@ -16,6 +16,7 @@ class AuthState extends Equatable {
   final String? userId;
   final Gender? gender;
   final int? age;
+  final String? name;
   final UserCategory? userCategory;
   final ResidenceType? residenceType;
   final EmploymentType? employmentType;
@@ -34,6 +35,7 @@ class AuthState extends Equatable {
     this.userCategory,
     this.residenceType,
     this.employmentType,
+    this.name,
     this.employmentCategory,
     this.childrenDetails,
     this.error,
@@ -47,6 +49,7 @@ class AuthState extends Equatable {
     String? userId,
     Gender? gender,
     int? age,
+    String? name,
     UserCategory? userCategory,
     ResidenceType? residenceType,
     EmploymentType? employmentType,
@@ -62,6 +65,7 @@ class AuthState extends Equatable {
       userId: userId ?? this.userId,
       gender: gender ?? this.gender,
       age: age ?? this.age,
+      name: name ?? this.name,
       userCategory: userCategory ?? this.userCategory,
       residenceType: residenceType ?? this.residenceType,
       employmentType: employmentType ?? this.employmentType,
@@ -83,6 +87,7 @@ class AuthState extends Equatable {
         age,
         residenceType,
         employmentType,
+        name,
         employmentCategory,
         childrenDetails,
         error,

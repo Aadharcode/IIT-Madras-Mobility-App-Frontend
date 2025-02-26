@@ -67,7 +67,7 @@ class AuthService {
 
       final body = json.encode({
         'number': int.parse(phoneNumber),
-        'name': name,
+        // 'name': name,
         'otp': otp,
       });
       print('📦 Request body: $body');
@@ -85,9 +85,8 @@ class AuthService {
         final errorMsg =
             json.decode(response.body)['msg'] ?? 'Failed to verify OTP';
         throw AuthException(errorMsg, code: response.statusCode.toString());
-      }
-
-      final data = json.decode(response.body);
+      }else{
+          final data = json.decode(response.body);
       print('✅ OTP verified successfully');
 
       // Create session with 4-day expiry
@@ -100,8 +99,9 @@ class AuthService {
       await saveSession(session);
       await _saveToken(data['token']);
       print('💾 Token and session saved to storage');
-
       return data;
+      }
+
     } catch (e, stackTrace) {
       print('❌ Exception while verifying OTP:');
       print('Error: $e');

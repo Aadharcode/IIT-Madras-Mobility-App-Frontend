@@ -45,11 +45,13 @@ class UpdateUserProfile extends AuthEvent {
   final List<int>? childrenDetails;
   final Gender? gender;
   final int? age;
+  final String? name;
   final BuildContext context;
 
   const UpdateUserProfile({
     this.userCategory,
     this.age,
+    this.name,
     this.residenceType,
     this.gender,
     this.employmentType,
@@ -63,6 +65,7 @@ class UpdateUserProfile extends AuthEvent {
         userCategory,
         residenceType,
         gender,
+        name,
         employmentType,
         employmentCategory,
         childrenDetails,

@@ -6,7 +6,6 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
 import '../../../authentication/presentation/screens/user_profile_screen.dart';
-import 'user_profile_screen.dart';
 
 class EmploymentScreen extends StatefulWidget{
   const EmploymentScreen({super.key});

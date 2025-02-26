@@ -136,9 +136,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         "age: ${userProfile?['age'] ?? 'Not Available'}",
                         style: theme.textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: 5),
+                     Text(
+                        "gender: ${userProfile?['gender'] ?? 'Not Available'}",
+                        style: theme.textTheme.bodyMedium,
+                      ),
                       Text(
                         "Phone: ${userProfile?['number'] ?? 'Not Available'}",
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      Text(
+                        "name: ${userProfile?['name'] ?? 'Not Available'}",
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 24),

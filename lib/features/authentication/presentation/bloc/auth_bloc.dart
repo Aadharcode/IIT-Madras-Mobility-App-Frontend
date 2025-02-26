@@ -62,76 +62,76 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Gender? _parseGender(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'male':
-        return Gender.male;
-      case 'female':
-        return Gender.female;
-      case 'nonbinary':
-        return Gender.nonBinary;
-      case 'noreveal':
-        return Gender.noReveal;
-      default:
-        return null;
-    }
-  }
+  // Gender? _parseGender(String? value) {
+  //   switch (value?.toLowerCase()) {
+  //     case 'male':
+  //       return Gender.male;
+  //     case 'female':
+  //       return Gender.female;
+  //     case 'nonbinary':
+  //       return Gender.nonBinary;
+  //     case 'noreveal':
+  //       return Gender.noReveal;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
-  UserCategory? _parseUserCategory(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'student':
-        return UserCategory.student;
-      case 'employee':
-        return UserCategory.employee;
-      case 'parent':
-        return UserCategory.parent;
-      case 'relative':
-        return UserCategory.relative;
-      default:
-        return null;
-    }
-  }
+  // UserCategory? _parseUserCategory(String? value) {
+  //   switch (value?.toLowerCase()) {
+  //     case 'student':
+  //       return UserCategory.student;
+  //     case 'employee':
+  //       return UserCategory.employee;
+  //     case 'parent':
+  //       return UserCategory.parent;
+  //     case 'relative':
+  //       return UserCategory.relative;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
-  ResidenceType? _parseResidenceType(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'oncampus':
-        return ResidenceType.onCampus;
-      case 'offcampus':
-        return ResidenceType.offCampus;
-      default:
-        return null;
-    }
-  }
+  // ResidenceType? _parseResidenceType(String? value) {
+  //   switch (value?.toLowerCase()) {
+  //     case 'oncampus':
+  //       return ResidenceType.onCampus;
+  //     case 'offcampus':
+  //       return ResidenceType.offCampus;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
-  EmploymentType? _parseEmploymentType(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'permanent':
-        return EmploymentType.permanent;
-      case 'contract':
-        return EmploymentType.contract;
-      case 'intern':
-        return EmploymentType.intern;
-      default:
-        return null;
-    }
-  }
+  // EmploymentType? _parseEmploymentType(String? value) {
+  //   switch (value?.toLowerCase()) {
+  //     case 'permanent':
+  //       return EmploymentType.permanent;
+  //     case 'contract':
+  //       return EmploymentType.contract;
+  //     case 'intern':
+  //       return EmploymentType.intern;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
-  EmploymentCategory? _parseEmploymentCategory(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'technical':
-        return EmploymentCategory.technical;
-      case 'research':
-        return EmploymentCategory.research;
-      case 'admin':
-        return EmploymentCategory.admin;
-      case 'school':
-        return EmploymentCategory.school;
-      case 'other':
-        return EmploymentCategory.other;
-      default:
-        return null;
-    }
-  }
+  // EmploymentCategory? _parseEmploymentCategory(String? value) {
+  //   switch (value?.toLowerCase()) {
+  //     case 'technical':
+  //       return EmploymentCategory.technical;
+  //     case 'research':
+  //       return EmploymentCategory.research;
+  //     case 'admin':
+  //       return EmploymentCategory.admin;
+  //     case 'school':
+  //       return EmploymentCategory.school;
+  //     case 'other':
+  //       return EmploymentCategory.other;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
   Future<void> _onVerifyOTP(
     VerifyOTP event,
@@ -148,14 +148,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       print('📥 OTP verification response:');
+      print(response['user']);
       print('- userId: ${response['user']['_id']}');
-      print('- userCategory: ${response['user']['userCategory']}');
-      print('- residenceType: ${response['user']['residenceType']}');
+      print('- userCategory: ${response['user']['category']}');
+      print('- residenceType: ${response['user']['residentType']}');
       print('- gender: ${response['user']['gender']}');
 
       // Check if user profile is complete
-      final userCategory = response['user']['userCategory'];
-      final residenceType = response['user']['residenceType'];
+      final userCategory = response['user']['category'];
+      final residenceType = response['user']['residentType'];
       final gender = response['user']['gender'];
 
       // Convert string values to enums if they exist
@@ -196,6 +197,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(
         isLoading: false,
         isAuthenticated: true,
+        name: response['user']['name'],
         userId: response['user']['_id'],
         userCategory: parsedCategory,
         residenceType: parsedResidence,
@@ -261,6 +263,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final employmentCategory = event.employmentCategory;
       final gender = event.gender;
       final age = event.age;
+      final name = event.name;
 
       if (userCategory != null) {
         body['category'] = enumToString(userCategory);
@@ -282,6 +285,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
       if (event.childrenDetails != null) {
         body['childrenDetails'] = event.childrenDetails;
+      }
+      if (event.name != null) {
+        body['name'] = event.name;
       }
 
       print('📤 Request body: ${json.encode(body)}');
@@ -309,6 +315,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
               event.employmentCategory ?? state.employmentCategory,
           childrenDetails: event.childrenDetails ?? state.childrenDetails,
           isAuthenticated: true,
+          name: event.name ?? state.name,
           error: null,
         ));
 

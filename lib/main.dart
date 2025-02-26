@@ -575,22 +575,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _nameController,
-                              style: theme.textTheme.titleMedium,
-                              decoration: const InputDecoration(
-                                labelText: 'Name',
-                                hintText: 'Enter your Name',
-                                prefixIcon: Icon(Icons.person_outline),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your name';
-                                }
-                                return null;
-                              },
-                            ),
+                            // const SizedBox(height: 16),
+                            // TextFormField(
+                            //   controller: _nameController,
+                            //   style: theme.textTheme.titleMedium,
+                            //   decoration: const InputDecoration(
+                            //     labelText: 'Name',
+                            //     hintText: 'Enter your Name',
+                            //     prefixIcon: Icon(Icons.person_outline),
+                            //   ),
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'Please enter your name';
+                            //     }
+                            //     return null;
+                            //   },
+                            // ),
                             const SizedBox(height: 24),
                             if (state.isLoading)
                               const Center(child: CircularProgressIndicator())
