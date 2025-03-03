@@ -83,53 +83,73 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   }
 
   void startLocationTracking(BuildContext context, List<Monument> monuments) {
-    Timer.periodic(Duration(seconds: 30), (_) async {
+    Monument? currentMonument;
+    Monument? previousMonument;
+    Timer.periodic(Duration(seconds: 1), (_) async {
       final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      print("😊😊😊😊😊");
 
       final LatLng currentLocation = LatLng(position.latitude, position.longitude);
-
-      final Monument? nearestMonument =
-          await MonumentService.findNearestMonument(currentLocation);
+      final Monument? nearestMonument = await MonumentService.findNearestMonument(currentLocation);
+      print(nearestMonument);
+      int sameMonumentCount = 0;
 
       if (nearestMonument == null) {
         print('No nearby monument found.');
+        // startLocationTracking(context, monuments);
         return;
       }
 
-      final currentState = BlocProvider.of<TripBloc>(context).state;
-      final Monument? previousMonument = currentState.currentMonument;
-      final Monument currentMonument = nearestMonument;
+      final tripBloc = BlocProvider.of<TripBloc>(context);
+      final currentState = tripBloc.state;
+      previousMonument = currentMonument;
+      currentMonument = nearestMonument;
+      print("😊😊😊😊😊 $currentMonument & $previousMonument");
 
-      if (currentMonument != previousMonument && previousMonument!= null) {
-        // Update state with new monuments
-        BlocProvider.of<TripBloc>(context).add(
-          TripUpdateMonumentEvent(
-            previousMonument: previousMonument,
-            currentMonument: currentMonument,
-          ),
-        );
-
-        // Trigger specific function
-        if(!currentState.isActive){
-        onMonumentChange(monuments);
+      if (nearestMonument == previousMonument && previousMonument != null) {
+        if (currentState.isActive) {
+          sameMonumentCount++; // Increment counter if the same monument is detected
+          
+          if (sameMonumentCount >= 300) {
+            // Case: Same monument for 10 consecutive checks & isActive = true → End Trip
+            print("Ending trip after 10 consecutive checks at ${nearestMonument.name}");
+            tripBloc.add(UpdateTripDetails(
+              userId: widget.userId,
+              vehicleType: null,
+              purpose: null,
+              occupancy: null,
+              selectedMonuments: [],
+              endMonument: previousMonument!,
+            ));
+            tripBloc.add(EndTrip());
+            sameMonumentCount = 0; // Reset counter after trip ends
+          }
         }
-      }else if(currentState.isActive){
-        if(previousMonument != null){
-        final bloc = context.read<TripBloc>();
-          bloc
-                            ..add(UpdateTripDetails(
-                              userId: widget.userId,
-                              vehicleType: null,
-                              purpose: null,
-                              occupancy: null,
-                              selectedMonuments: [],
-                              endMonument: previousMonument,
-                            ))
-                            ..add(EndTrip());
+        return; // Do nothing if `isActive` is false
+      } 
 
-      }
+      // Monument changed, reset counter
+      sameMonumentCount = 0;
+
+      if (nearestMonument != previousMonument && currentState.isActive && previousMonument != null) {
+        tripBloc.add(TripUpdateMonumentEvent(
+        previousMonument: previousMonument!,
+        currentMonument: nearestMonument,
+      ));
+        // Case: Different monument & isActive = true → Select new monument
+        tripBloc.add(TripUpdateMonumentEvent(
+          previousMonument: previousMonument!,
+          currentMonument: nearestMonument,
+        ));
+      } else if (nearestMonument != previousMonument && !currentState.isActive && previousMonument != null){
+        // Case: Different monument & isActive = false → Start Trip
+        print("Starting a new trip at ${nearestMonument.name}");
+        tripBloc.add(StartTrip(
+          userId: widget.userId,
+          startMonument: nearestMonument,
+        ));
       }
     });
   }

@@ -56,6 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (authState.isAuthenticated) {
           setState(() {
             userProfile = {
+              'name': authState.name ?? "",
               'number': authState.phoneNumber ?? '',
               'category': authState.userCategory ?? '',
               'residentType': authState.residenceType ?? '',
@@ -173,6 +174,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
         _showSnackBar('Trip data downloaded successfully');
       } else {
+        _showSnackBar('Only admin is allowed to see the csv file');
         throw Exception('Failed to download data: ${response.statusCode}');
       }
     } catch (e) {
@@ -549,4 +551,7 @@ class _ProfilePageState extends State<ProfilePage> {
       return 'Grade $grade';
     }).join(', ');
   }
+  
 }
+
+
