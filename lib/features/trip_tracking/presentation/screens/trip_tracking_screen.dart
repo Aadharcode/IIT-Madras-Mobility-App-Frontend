@@ -115,15 +115,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           if (sameMonumentCount >= 300) {
             // Case: Same monument for 10 consecutive checks & isActive = true → End Trip
             print("Ending trip after 10 consecutive checks at ${nearestMonument.name}");
-            tripBloc.add(UpdateTripDetails(
-              userId: widget.userId,
-              vehicleType: null,
-              purpose: null,
-              occupancy: null,
-              selectedMonuments: [],
-              endMonument: previousMonument!,
-            ));
-            tripBloc.add(EndTrip());
+            _showTripEndDialog(context);
             sameMonumentCount = 0; // Reset counter after trip ends
           }
         }
