@@ -274,6 +274,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 label: 'Name',
                                 value: userProfile?['name'] ?? 'Not Available',
                                 theme: theme,
+                                keyName: 'name'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -282,6 +283,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: userProfile?['number']?.toString() ??
                                     'Not Available',
                                 theme: theme,
+                                keyName: 'number'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -290,6 +292,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value:
                                     _formatCategory(userProfile?['category']),
                                 theme: theme,
+                                keyName: 'category'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -298,6 +301,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: _formatResidenceType(
                                     userProfile?['residentType']),
                                 theme: theme,
+                                keyName: 'residentType'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -305,6 +309,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 label: 'Gender',
                                 value: _formatGender(userProfile?['gender']),
                                 theme: theme,
+                                keyName: 'gender'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -313,6 +318,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: userProfile?['age']?.toString() ??
                                     'Not Available',
                                 theme: theme,
+                                keyName: 'age'
                               ),
                               if (userProfile?['category'] == 'employee') ...[
                                 const Divider(height: 24),
@@ -322,6 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatEmploymentType(
                                       userProfile?['employmentType']),
                                   theme: theme,
+                                  keyName: 'employmentType'
                                 ),
                                 const Divider(height: 24),
                                 _buildProfileItem(
@@ -330,6 +337,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatEmploymentCategory(
                                       userProfile?['employmentCategory']),
                                   theme: theme,
+                                  keyName: "employmentCategory"
                                 ),
                               ],
                               if (userProfile?['category'] == 'parent' &&
@@ -341,6 +349,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatChildrenDetails(
                                       userProfile?['childrenDetails']),
                                   theme: theme,
+                                  keyName: "childrenDetails",
                                 ),
                               ],
                             ],
@@ -419,47 +428,187 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required ThemeData theme,
-  }) {
-    // Handle all possible null or empty cases
-    String displayValue = 'Not Available';
-    if (value.isNotEmpty &&
-        value != 'null' &&
-        value != 'Null' &&
-        value != 'NULL') {
-      displayValue = value;
-    }
+ Widget _buildProfileItem({
+  required IconData icon,
+  required String label,
+  required String value,
+  required ThemeData theme,
+  required String keyName, // Field identifier
+}) {
+  bool isEditable = keyName != 'number'; // Phone number is not editable
+  ValueNotifier<bool> editNotifier = ValueNotifier(false); // Ensures it's never null
 
-    return Row(
-      children: [
-        Icon(icon, color: theme.colorScheme.primary, size: 24),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
+  return StatefulBuilder(
+    builder: (context, setState) {
+      TextEditingController textController = TextEditingController(text: value);
+      String selectedValue = value; // Used for dropdown selection
+
+      return ValueListenableBuilder<bool>(
+        valueListenable: editNotifier, // Uses a non-null notifier
+        builder: (context, isEditing, child) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
+              Row(
+                children: [
+                  Icon(icon, color: theme.colorScheme.primary, size: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        isEditing
+                            ? Column(
+                                children: [
+                                  _buildEditableField(
+                                    keyName: keyName,
+                                    value: value,
+                                    controller: textController,
+                                    theme: theme,
+                                    onValueChange: (newValue) {
+                                      selectedValue = newValue;
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () => editNotifier.value = false,
+                                        child: const Text("Cancel"),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          _updateUserProfile(keyName, selectedValue);
+                                          editNotifier.value = false;
+                                        },
+                                        child: const Text("Save"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : GestureDetector(
+                                onTap: isEditable
+                                    ? () => editNotifier.value = true
+                                    : null,
+                                child: Text(
+                                  value.isNotEmpty ? value : 'Not Available',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
+                  if (isEditable)
+                    IconButton(
+                      icon: Icon(Icons.edit, color: theme.colorScheme.primary),
+                      onPressed: () => editNotifier.value = true,
+                    ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                displayValue,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const Divider(height: 24),
             ],
-          ),
-        ),
-      ],
+          );
+        },
+      );
+    },
+  );
+}
+
+
+Widget _buildEditableField({
+  required String keyName,
+  required String value,
+  required TextEditingController controller,
+  required ThemeData theme,
+  required Function(String) onValueChange,
+}) {
+  if (['userCategory', 'residenceType', 'gender', 'employmentType', 'employmentCategory'].contains(keyName)) {
+    return DropdownButtonFormField<String>(
+      value: value.isNotEmpty ? value : null,
+      items: _getDropdownItems(keyName),
+      onChanged: (newValue) {
+        if (newValue != null) onValueChange(newValue);
+      },
+      decoration: InputDecoration(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceVariant,
+      ),
     );
+  } else {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceVariant,
+      ),
+      onChanged: onValueChange,
+    );
+  }
+}
+
+List<DropdownMenuItem<String>> _getDropdownItems(String keyName) {
+  switch (keyName) {
+    case 'userCategory':
+      return UserCategory.values
+          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
+          .toList();
+    case 'residenceType':
+      return ResidenceType.values
+          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
+          .toList();
+    case 'gender':
+      return Gender.values
+          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
+          .toList();
+    case 'employmentType':
+      return EmploymentType.values
+          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
+          .toList();
+    case 'employmentCategory':
+      return EmploymentCategory.values
+          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
+          .toList();
+    default:
+      return [];
+  }
+}
+  void _updateUserProfile(String fieldKey, dynamic newValue) {
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    
+    final updatedProfile = {
+      'name': fieldKey == 'name' ? newValue : authState.name,
+      'gender': fieldKey == 'gender' ? _formatGender(newValue) : authState.gender,
+      'age': fieldKey == 'age' ? newValue : authState.age,
+      'userCategory': fieldKey == 'category' ? _formatCategory(newValue) : authState.userCategory,
+      'residenceType': fieldKey == 'residentType' ? _formatResidenceType(newValue) : authState.residenceType,
+      'employmentType': fieldKey == 'employmentType' ? _formatEmploymentType(newValue) : authState.employmentType,
+      'employmentCategory': fieldKey == 'employmentCategory' ? _formatEmploymentCategory(newValue) : authState.employmentCategory,
+    };
+    
+    authBloc.add(UpdateUserProfile(
+      name: updatedProfile['name'],
+      age: updatedProfile['age'],
+      gender: updatedProfile['gender'],
+      userCategory: updatedProfile['userCategory'],
+      residenceType: updatedProfile['residenceType'],
+      employmentType: updatedProfile['employmentType'],
+      employmentCategory: updatedProfile['employmentCategory'],
+      context: context,
+    ));
   }
 
   String _formatCategory(String? category) {
