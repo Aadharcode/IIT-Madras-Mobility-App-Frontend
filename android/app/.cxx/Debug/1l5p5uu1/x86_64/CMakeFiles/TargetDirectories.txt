@@ -1,0 +1,2 @@
+/Volumes/prakashssd/Github/IIT-Madras-Mobility-App-Frontend/android/app/.cxx/Debug/1l5p5uu1/x86_64/CMakeFiles/edit_cache.dir
+/Volumes/prakashssd/Github/IIT-Madras-Mobility-App-Frontend/android/app/.cxx/Debug/1l5p5uu1/x86_64/CMakeFiles/rebuild_cache.dir

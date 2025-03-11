@@ -4,6 +4,7 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'user_profile_screen.dart';
+import '../../../trip_tracking/presentation/screens/trip_tracking_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -38,17 +39,39 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
+          print('🔄 OTP Screen State Update:');
+          print('- isAuthenticated: ${state.isAuthenticated}');
+          print('- userId: ${state.userId}');
+          print('- userCategory: ${state.userCategory}');
+          print('- residenceType: ${state.residenceType}');
+          print('- error: ${state.error}');
+
           if (state.error != null) {
+            print('❌ Error in OTP verification: ${state.error}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error!)),
             );
           }
           if (state.isAuthenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => const UserProfileScreen(),
-              ),
-            );
+            print('✅ Authentication successful - navigating to profile screen');
+            if (state.isLoginFlow ||
+                (state.userCategory != null && state.residenceType != null)) {
+              print(
+                  '👤 User profile already complete or login flow - navigating to trip tracking');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => TripTrackingScreen(userId: state.userId!),
+                ),
+              );
+            } else {
+              print(
+                  '👤 User profile incomplete - navigating to profile screen');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const UserProfileScreen(),
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -112,7 +135,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     onPressed: () {
                       // TODO: Implement resend OTP functionality
                       context.read<AuthBloc>().add(
-                            SendPhoneNumberVerification(widget.phoneNumber, widget.name),
+                            SendPhoneNumberVerification(
+                                widget.phoneNumber, widget.name),
                           );
                     },
                     child: const Text('Resend OTP'),

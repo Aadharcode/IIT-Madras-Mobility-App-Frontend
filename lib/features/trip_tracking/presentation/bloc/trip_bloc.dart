@@ -39,6 +39,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     on<LoadPastTrips>(_onLoadPastTrips);
     on<CheckLocation>(_onCheckLocation);
     on<CheckNearbyMonument>(_onCheckNearbyMonument);
+    on<TripUpdateMonumentEvent>(_onUpdateTrip);
 
     _initializeLocationTracking();
   }
@@ -51,6 +52,17 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       error: null,
     ));
   }
+
+  void _onUpdateTrip(
+    TripUpdateMonumentEvent event,
+    Emitter<TripState> emit,
+  ) {
+    emit(state.copyWith(
+      currentMonument: event.currentMonument,
+      previousMonument: event.previousMonument,
+    ));
+  }
+
 
   void _onMonumentReached(
     MonumentReached event,

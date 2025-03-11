@@ -75,10 +75,90 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
           );
         }
       });
+      // Start tracking location after monuments are initialized
+    startLocationTracking(context, _monuments);
     } catch (e) {
       print("Error initializing monuments: $e");
     }
   }
+
+  void startLocationTracking(BuildContext context, List<Monument> monuments) {
+    Monument? currentMonument;
+    Monument? previousMonument;
+    Timer.periodic(Duration(seconds: 1), (_) async {
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      print("😊😊😊😊😊");
+
+      final LatLng currentLocation = LatLng(position.latitude, position.longitude);
+      final Monument? nearestMonument = await MonumentService.findNearestMonument(currentLocation);
+      print(nearestMonument);
+      int sameMonumentCount = 0;
+
+      if (nearestMonument == null) {
+        print('No nearby monument found.');
+        // startLocationTracking(context, monuments);
+        return;
+      }
+
+      final tripBloc = BlocProvider.of<TripBloc>(context);
+      final currentState = tripBloc.state;
+      previousMonument = currentMonument;
+      currentMonument = nearestMonument;
+      print("😊😊😊😊😊 $currentMonument & $previousMonument");
+
+      if (nearestMonument == previousMonument && previousMonument != null) {
+        if (currentState.isActive) {
+          sameMonumentCount++; // Increment counter if the same monument is detected
+          
+          if (sameMonumentCount >= 300) {
+            // Case: Same monument for 10 consecutive checks & isActive = true → End Trip
+            print("Ending trip after 10 consecutive checks at ${nearestMonument.name}");
+            _showTripEndDialog(context);
+            sameMonumentCount = 0; // Reset counter after trip ends
+          }
+        }
+        return; // Do nothing if `isActive` is false
+      } 
+
+      // Monument changed, reset counter
+      sameMonumentCount = 0;
+
+      if (nearestMonument != previousMonument && currentState.isActive && previousMonument != null) {
+        tripBloc.add(TripUpdateMonumentEvent(
+        previousMonument: previousMonument!,
+        currentMonument: nearestMonument,
+      ));
+        // Case: Different monument & isActive = true → Select new monument
+        tripBloc.add(TripUpdateMonumentEvent(
+          previousMonument: previousMonument!,
+          currentMonument: nearestMonument,
+        ));
+      } else if (nearestMonument != previousMonument && !currentState.isActive && previousMonument != null){
+        // Case: Different monument & isActive = false → Start Trip
+        print("Starting a new trip at ${nearestMonument.name}");
+        tripBloc.add(StartTrip(
+          userId: widget.userId,
+          startMonument: nearestMonument,
+        ));
+      }
+    });
+  }
+
+  void onMonumentChange(List<Monument> monuments) {
+    final currentState = BlocProvider.of<TripBloc>(context).state;
+    final Monument? monument = currentState.currentMonument;
+    if(monument != null){
+      context.read<TripBloc>().add(
+                      StartTrip(
+                        userId: widget.userId,
+                        startMonument: monument,
+                      ),
+                    );
+    }
+  }
+
 
   void _showMonumentDescription(
       BuildContext context, String name, String description) {
@@ -443,33 +523,39 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
         );
         return;
       }
-
-      // Show confirmation dialog
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Start Trip'),
-          content: Text('Start trip from ${nearestMonument.name}?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<TripBloc>().add(
+      context.read<TripBloc>().add(
                       StartTrip(
                         userId: widget.userId,
                         startMonument: nearestMonument,
                       ),
                     );
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Start'),
-            ),
-          ],
-        ),
-      );
+
+      // Show confirmation dialog
+      // showDialog(
+      //   context: context,
+      //   builder: (dialogContext) => AlertDialog(
+      //     title: const Text('Start Trip'),
+      //     content: Text('Start trip from ${nearestMonument.name}?'),
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () => Navigator.of(dialogContext).pop(),
+      //         child: const Text('Cancel'),
+      //       ),
+      //       ElevatedButton(
+      //         onPressed: () {
+      //           context.read<TripBloc>().add(
+      //                 StartTrip(
+      //                   userId: widget.userId,
+      //                   startMonument: nearestMonument,
+      //                 ),
+      //               );
+      //           Navigator.of(dialogContext).pop();
+      //         },
+      //         child: const Text('Start'),
+      //       ),
+      //     ],
+      //   ),
+      // );
     } catch (e) {
       print('Error in _showStartDialog: $e');
       if (!mounted) return;

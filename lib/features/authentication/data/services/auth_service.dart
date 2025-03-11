@@ -15,7 +15,8 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com';
+  static const String baseUrl =
+      'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
   static const String tokenKey = 'kjbnaeildnflia';
   static const String sessionKey = 'user_session';
 
@@ -66,7 +67,7 @@ class AuthService {
 
       final body = json.encode({
         'number': int.parse(phoneNumber),
-        'name': name,
+        // 'name': name,
         'otp': otp,
       });
       print('📦 Request body: $body');
@@ -84,23 +85,22 @@ class AuthService {
         final errorMsg =
             json.decode(response.body)['msg'] ?? 'Failed to verify OTP';
         throw AuthException(errorMsg, code: response.statusCode.toString());
+      } else {
+        final data = json.decode(response.body);
+        print('✅ OTP verified successfully');
+
+        // Create session with 4-day expiry
+        final session = UserSession(
+          token: data['token'],
+          expiryDate: DateTime.now().add(const Duration(days: 4)),
+          userId: data['user']['_id'],
+        );
+
+        await saveSession(session);
+        await _saveToken(data['token']);
+        print('💾 Token and session saved to storage');
+        return data;
       }
-
-      final data = json.decode(response.body);
-      print('✅ OTP verified successfully');
-
-      // Create session with 4-day expiry
-      final session = UserSession(
-        token: data['token'],
-        expiryDate: DateTime.now().add(const Duration(days: 4)),
-        userId: data['user']['_id'],
-      );
-
-      await saveSession(session);
-      await _saveToken(data['token']);
-      print('💾 Token and session saved to storage');
-
-      return data;
     } catch (e, stackTrace) {
       print('❌ Exception while verifying OTP:');
       print('Error: $e');
@@ -211,5 +211,33 @@ class AuthService {
   Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(sessionKey);
+  }
+
+  Future<Map<String, dynamic>> updateUserProfile(
+      Map<String, dynamic> updates) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/login/details'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(updates),
+      );
+
+      if (response.statusCode != 200) {
+        final error = json.decode(response.body);
+        throw Exception(error['msg'] ?? 'Failed to update profile');
+      }
+
+      return json.decode(response.body)['user'];
+    } catch (e) {
+      throw Exception('Failed to update profile: $e');
+    }
   }
 }

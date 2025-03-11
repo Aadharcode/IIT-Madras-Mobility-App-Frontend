@@ -98,3 +98,14 @@ class CheckNearbyMonument extends TripEvent {
   @override
   List<Object?> get props => [];
 }
+
+class TripUpdateMonumentEvent extends TripEvent {
+  final Monument previousMonument;
+  final Monument currentMonument;
+
+  TripUpdateMonumentEvent({required this.previousMonument,required this.currentMonument});
+
+  @override
+  List<Object?> get props => [previousMonument, currentMonument];
+}
+

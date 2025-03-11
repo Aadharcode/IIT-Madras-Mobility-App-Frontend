@@ -15,30 +15,12 @@ import 'features/trip_tracking/data/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io' show Platform;
 import 'package:permission_handler/permission_handler.dart';
+
 void main() async {
-
-
-
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Request notification permission for Android 13 and above
-  if (Platform.isAndroid) {
-    final notificationPermission = await Permission.notification.status;
-    if (notificationPermission.isDenied) {
-      await Permission.notification.request();
-    }
-  }
-
-
-  await BackgroundService.initializeService();
-  await NotificationService.initialize();
-    final hasPermission = await requestExactAlarmPermission();
-  if (hasPermission) {
-    await NotificationService.scheduleNightlyCheck();
-  }
-  await NotificationService.scheduleNightlyCheck();
-  // Request exact alarm permission before scheduling
-
+  // Remove notification initialization from here since we'll do it after permissions
+  // await NotificationService.initialize(); // Initialize notification service
+  await NotificationService.registerWorkManager(); // Register background task
   runApp(const MyApp());
 }
 
@@ -140,14 +122,31 @@ class AuthenticationWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
+        print('🔐 AuthenticationWrapper State:');
+        print('- isAuthenticated: ${state.isAuthenticated}');
+        print('- userId: ${state.userId}');
+        print('- userCategory: ${state.userCategory}');
+        print('- residenceType: ${state.residenceType}');
+        print('- phoneNumber: ${state.phoneNumber}');
+
         if (state.isAuthenticated) {
           if (state.userId != null) {
+            print(
+                '✅ Navigating to TripTrackingScreen with userId: ${state.userId}');
             return TripTrackingScreen(userId: state.userId!);
           }
-          if (state.userCategory == null || state.residenceType == null) {
+          // Only check for profile completion if it's not a login flow
+          if (!state.isLoginFlow &&
+              (state.userCategory == null || state.residenceType == null)) {
+            print('⚠️ Missing profile info - redirecting to UserProfileScreen');
             return const UserProfileScreen();
           }
+          // If it's a login flow, go directly to trip tracking
+          if (state.isLoginFlow) {
+            return TripTrackingScreen(userId: state.userId ?? '');
+          }
         }
+        print('🔄 Showing PhoneAuthScreen - not authenticated');
         return const PhoneAuthScreen();
       },
     );
@@ -172,6 +171,164 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     _phoneController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _requestPermissions() async {
+    // First request basic location permission
+    final locationPermission = await Permission.location.request();
+    if (locationPermission.isDenied || locationPermission.isPermanentlyDenied) {
+      return false;
+    }
+
+    // For Android, request background location with proper guidance
+    if (Platform.isAndroid) {
+      // Show guidance dialog before requesting background location
+      if (!context.mounted) return false;
+      final proceedWithBackground = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Background Location Required'),
+                content: const Text(
+                    'This app needs background location access to track your campus entry/exit even when the app is closed.\n\nOn the next screen, please select "Allow all the time" to enable this feature.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                    child: const Text('Continue'),
+                  ),
+                ],
+              );
+            },
+          ) ??
+          false;
+
+      if (!proceedWithBackground) return false;
+
+      final backgroundLocation = await Permission.locationAlways.request();
+      // Check if background permission was granted
+      final locationAlwaysStatus = await Permission.locationAlways.status;
+      if (!locationAlwaysStatus.isGranted) {
+        if (!context.mounted) return false;
+        // Show settings guidance if not granted
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Additional Setup Required'),
+              content: const Text(
+                  'Please select "Allow all the time" in the location permission settings to enable background tracking.'),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await openAppSettings();
+                  },
+                  child: const Text('Open Settings'),
+                ),
+              ],
+            );
+          },
+        );
+        return false;
+      }
+    }
+
+    // Request notification permission
+    final notificationPermission = await Permission.notification.request();
+    if (notificationPermission.isDenied ||
+        notificationPermission.isPermanentlyDenied) {
+      return false;
+    }
+
+    // Request exact alarm permission (Android only)
+    if (Platform.isAndroid) {
+      final hasExactAlarm = await requestExactAlarmPermission();
+      if (!hasExactAlarm) return false;
+    }
+
+    // Initialize notification service after permissions are granted
+    await NotificationService.initialize();
+
+    return true;
+  }
+
+  Future<bool> _checkPermissions() async {
+    final locationStatus = await Permission.location.status;
+    if (!locationStatus.isGranted) return false;
+
+    if (Platform.isAndroid) {
+      final backgroundLocationStatus = await Permission.locationAlways.status;
+      if (!backgroundLocationStatus.isGranted) return false;
+    }
+
+    final notificationStatus = await Permission.notification.status;
+    if (!notificationStatus.isGranted) return false;
+
+    if (Platform.isAndroid) {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      final hasExactAlarm = await flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>()
+              ?.requestExactAlarmsPermission() ??
+          false;
+      if (!hasExactAlarm) return false;
+    }
+
+    return true;
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Permissions Required'),
+          content: const Text(
+              'This app requires location access "all the time" and notification permissions to function properly. Please grant all permissions to continue.'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                // Check current permission status first
+                final hasExistingPermissions = await _checkPermissions();
+                if (hasExistingPermissions) {
+                  setState(() {
+                    _hasConsent = true;
+                  });
+                  return;
+                }
+                // Only request if not already granted
+                final hasPermissions = await _requestPermissions();
+                if (hasPermissions) {
+                  setState(() {
+                    _hasConsent = true;
+                  });
+                }
+              },
+              child: const Text('Review Permissions'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                SystemNavigator.pop();
+              },
+              child: const Text('Exit App'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showExitDialog() {
@@ -233,9 +390,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             child: SingleChildScrollView(
               child: Text(
                 'This app is part of a research initiative by IIT Madras to improve campus mobility and sustainability. By participating, you agree to:\n\n'
-                '• Share anonymous location data only when you enter or exit specific campus locations\n'
+                '• Share location data (including background location) for tracking campus entry/exit\n'
+                '• Receive notifications for trip verification and updates\n'
+                '• Allow exact alarm permissions for scheduled checks\n'
                 '• Contribute to research aimed at reducing traffic congestion and protecting campus wildlife\n'
-                '• Receive important updates about the research and campus mobility\n'
                 '• Help us develop better transportation solutions for our campus community\n\n'
                 'Your data will be used solely for research purposes and handled with strict confidentiality.',
                 style: theme.textTheme.bodyMedium,
@@ -255,6 +413,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.error,
+                    foregroundColor: Colors.white,
+                    textStyle: theme.textTheme.bodyMedium,
                   ),
                   child: const Text('Maybe Later'),
                 ),
@@ -262,10 +422,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _hasConsent = true;
-                    });
+                  onPressed: () async {
+                    // First check if permissions are already granted
+                    final hasExistingPermissions = await _checkPermissions();
+                    if (hasExistingPermissions) {
+                      setState(() {
+                        _hasConsent = true;
+                      });
+                      return;
+                    }
+
+                    // If not, request permissions
+                    final hasPermissions = await _requestPermissions();
+                    if (hasPermissions) {
+                      setState(() {
+                        _hasConsent = true;
+                      });
+                    } else {
+                      _showPermissionDeniedDialog();
+                    }
                   },
                   child: const Text('Participate'),
                 ),
@@ -292,12 +467,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               ),
             );
           }
-          if (state.phoneNumber != null) {
+          if (state.phoneNumber != null && state.isAuthenticated == false) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => OTPVerificationScreen(
                   phoneNumber: state.phoneNumber!,
-                  name: _nameController.text,
+                  name: state.isLoginFlow ? '' : _nameController.text,
                 ),
               ),
             );
@@ -400,22 +575,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _nameController,
-                              style: theme.textTheme.titleMedium,
-                              decoration: const InputDecoration(
-                                labelText: 'Name',
-                                hintText: 'Enter your Name',
-                                prefixIcon: Icon(Icons.person_outline),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your name';
-                                }
-                                return null;
-                              },
-                            ),
+                            // const SizedBox(height: 16),
+                            // TextFormField(
+                            //   controller: _nameController,
+                            //   style: theme.textTheme.titleMedium,
+                            //   decoration: const InputDecoration(
+                            //     labelText: 'Name',
+                            //     hintText: 'Enter your Name',
+                            //     prefixIcon: Icon(Icons.person_outline),
+                            //   ),
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'Please enter your name';
+                            //     }
+                            //     return null;
+                            //   },
+                            // ),
                             const SizedBox(height: 24),
                             if (state.isLoading)
                               const Center(child: CircularProgressIndicator())
@@ -437,6 +612,35 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         ),
                       ),
                     const SizedBox(height: 16),
+                    if (_hasConsent == true)
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Already have an account?'),
+                            TextButton(
+                              onPressed: () {
+                                if (_phoneController.text.isNotEmpty &&
+                                    _phoneController.text.length == 10) {
+                                  context.read<AuthBloc>().add(
+                                        LoginEvent(
+                                          _phoneController.text,
+                                        ),
+                                      );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Please enter a valid phone number'),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Login'),
+                            ),
+                          ],
+                        ),
+                      ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
