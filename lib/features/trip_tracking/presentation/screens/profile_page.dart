@@ -274,7 +274,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 label: 'Name',
                                 value: userProfile?['name'] ?? 'Not Available',
                                 theme: theme,
-                                keyName: 'name'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -283,7 +282,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: userProfile?['number']?.toString() ??
                                     'Not Available',
                                 theme: theme,
-                                keyName: 'number'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -292,7 +290,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value:
                                     _formatCategory(userProfile?['category']),
                                 theme: theme,
-                                keyName: 'category'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -301,7 +298,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: _formatResidenceType(
                                     userProfile?['residentType']),
                                 theme: theme,
-                                keyName: 'residentType'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -309,7 +305,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 label: 'Gender',
                                 value: _formatGender(userProfile?['gender']),
                                 theme: theme,
-                                keyName: 'gender'
                               ),
                               const Divider(height: 24),
                               _buildProfileItem(
@@ -318,7 +313,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 value: userProfile?['age']?.toString() ??
                                     'Not Available',
                                 theme: theme,
-                                keyName: 'age'
                               ),
                               if (userProfile?['category'] == 'employee') ...[
                                 const Divider(height: 24),
@@ -328,7 +322,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatEmploymentType(
                                       userProfile?['employmentType']),
                                   theme: theme,
-                                  keyName: 'employmentType'
                                 ),
                                 const Divider(height: 24),
                                 _buildProfileItem(
@@ -337,7 +330,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatEmploymentCategory(
                                       userProfile?['employmentCategory']),
                                   theme: theme,
-                                  keyName: "employmentCategory"
                                 ),
                               ],
                               if (userProfile?['category'] == 'parent' &&
@@ -349,7 +341,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: _formatChildrenDetails(
                                       userProfile?['childrenDetails']),
                                   theme: theme,
-                                  keyName: "childrenDetails",
                                 ),
                               ],
                             ],
@@ -428,187 +419,409 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
- Widget _buildProfileItem({
-  required IconData icon,
-  required String label,
-  required String value,
-  required ThemeData theme,
-  required String keyName, // Field identifier
-}) {
-  bool isEditable = keyName != 'number'; // Phone number is not editable
-  ValueNotifier<bool> editNotifier = ValueNotifier(false); // Ensures it's never null
+  Widget _buildProfileItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required ThemeData theme,
+  }) {
+    // Handle all possible null or empty cases
+    String displayValue = 'Not Available';
+    if (value.isNotEmpty &&
+        value != 'null' &&
+        value != 'Null' &&
+        value != 'NULL') {
+      displayValue = value;
+    }
 
-  return StatefulBuilder(
-    builder: (context, setState) {
-      TextEditingController textController = TextEditingController(text: value);
-      String selectedValue = value; // Used for dropdown selection
-
-      return ValueListenableBuilder<bool>(
-        valueListenable: editNotifier, // Uses a non-null notifier
-        builder: (context, isEditing, child) {
-          return Column(
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(icon, color: theme.colorScheme.primary, size: 24),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        isEditing
-                            ? Column(
-                                children: [
-                                  _buildEditableField(
-                                    keyName: keyName,
-                                    value: value,
-                                    controller: textController,
-                                    theme: theme,
-                                    onValueChange: (newValue) {
-                                      selectedValue = newValue;
-                                    },
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () => editNotifier.value = false,
-                                        child: const Text("Cancel"),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          _updateUserProfile(keyName, selectedValue);
-                                          editNotifier.value = false;
-                                        },
-                                        child: const Text("Save"),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : GestureDetector(
-                                onTap: isEditable
-                                    ? () => editNotifier.value = true
-                                    : null,
-                                child: Text(
-                                  value.isNotEmpty ? value : 'Not Available',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                      ],
-                    ),
-                  ),
-                  if (isEditable)
-                    IconButton(
-                      icon: Icon(Icons.edit, color: theme.colorScheme.primary),
-                      onPressed: () => editNotifier.value = true,
-                    ),
-                ],
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
               ),
-              const Divider(height: 24),
+              const SizedBox(height: 4),
+              Text(
+                displayValue,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
-          );
-        },
-      );
-    },
-  );
-}
-
-
-Widget _buildEditableField({
-  required String keyName,
-  required String value,
-  required TextEditingController controller,
-  required ThemeData theme,
-  required Function(String) onValueChange,
-}) {
-  if (['userCategory', 'residenceType', 'gender', 'employmentType', 'employmentCategory'].contains(keyName)) {
-    return DropdownButtonFormField<String>(
-      value: value.isNotEmpty ? value : null,
-      items: _getDropdownItems(keyName),
-      onChanged: (newValue) {
-        if (newValue != null) onValueChange(newValue);
-      },
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        filled: true,
-        fillColor: theme.colorScheme.surfaceVariant,
-      ),
-    );
-  } else {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        filled: true,
-        fillColor: theme.colorScheme.surfaceVariant,
-      ),
-      onChanged: onValueChange,
+          ),
+        ),
+        if (label != 'Phone') // Phone number cannot be edited
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => _showEditDialog(label, value),
+            color: theme.colorScheme.primary,
+          ),
+      ],
     );
   }
-}
 
-List<DropdownMenuItem<String>> _getDropdownItems(String keyName) {
-  switch (keyName) {
-    case 'userCategory':
-      return UserCategory.values
-          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
-          .toList();
-    case 'residenceType':
-      return ResidenceType.values
-          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
-          .toList();
-    case 'gender':
-      return Gender.values
-          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
-          .toList();
-    case 'employmentType':
-      return EmploymentType.values
-          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
-          .toList();
-    case 'employmentCategory':
-      return EmploymentCategory.values
-          .map((e) => DropdownMenuItem(value: e.name, child: Text(e.name)))
-          .toList();
-    default:
-      return [];
+  Future<void> _showEditDialog(String label, String currentValue) async {
+    String? newValue = currentValue;
+    int? newAge;
+    List<int>? newGrades;
+
+    switch (label) {
+      case 'Name':
+        newValue = await _showTextFieldDialog(label, currentValue);
+        if (newValue != null) {
+          _updateProfile({'name': newValue});
+        }
+        break;
+      case 'Age':
+        newAge = await _showNumberFieldDialog(label, currentValue);
+        if (newAge != null) {
+          _updateProfile({'age': newAge});
+        }
+        break;
+      case 'Gender':
+        newValue = await _showGenderSelectionDialog();
+        if (newValue != null) {
+          _updateProfile({'gender': newValue.toLowerCase()});
+        }
+        break;
+      case 'Category':
+        newValue = await _showCategorySelectionDialog();
+        if (newValue != null) {
+          _updateProfile({'category': newValue.toLowerCase()});
+        }
+        break;
+      case 'Residence Type':
+        newValue = await _showResidenceTypeSelectionDialog();
+        if (newValue != null) {
+          _updateProfile({'residentType': newValue.toLowerCase()});
+        }
+        break;
+      case 'Employment Type':
+        if (userProfile?['category'] == 'employee') {
+          newValue = await _showEmploymentTypeSelectionDialog();
+          if (newValue != null) {
+            _updateProfile({'employmentType': newValue.toLowerCase()});
+          }
+        }
+        break;
+      case 'Employment Category':
+        if (userProfile?['category'] == 'employee') {
+          newValue = await _showEmploymentCategorySelectionDialog();
+          if (newValue != null) {
+            _updateProfile({'employmentCategory': newValue.toLowerCase()});
+          }
+        }
+        break;
+      case 'Children Grades':
+        if (userProfile?['category'] == 'parent') {
+          newGrades = await _showChildrenGradesDialog(
+              userProfile?['childrenDetails'] ?? []);
+          if (newGrades != null) {
+            _updateProfile({'childrenDetails': newGrades});
+          }
+        }
+        break;
+    }
   }
-}
-  void _updateUserProfile(String fieldKey, dynamic newValue) {
-    final authBloc = context.read<AuthBloc>();
-    final authState = authBloc.state;
-    
-    final updatedProfile = {
-      'name': fieldKey == 'name' ? newValue : authState.name,
-      'gender': fieldKey == 'gender' ? _formatGender(newValue) : authState.gender,
-      'age': fieldKey == 'age' ? newValue : authState.age,
-      'userCategory': fieldKey == 'category' ? _formatCategory(newValue) : authState.userCategory,
-      'residenceType': fieldKey == 'residentType' ? _formatResidenceType(newValue) : authState.residenceType,
-      'employmentType': fieldKey == 'employmentType' ? _formatEmploymentType(newValue) : authState.employmentType,
-      'employmentCategory': fieldKey == 'employmentCategory' ? _formatEmploymentCategory(newValue) : authState.employmentCategory,
-    };
-    
-    authBloc.add(UpdateUserProfile(
-      name: updatedProfile['name'],
-      age: updatedProfile['age'],
-      gender: updatedProfile['gender'],
-      userCategory: updatedProfile['userCategory'],
-      residenceType: updatedProfile['residenceType'],
-      employmentType: updatedProfile['employmentType'],
-      employmentCategory: updatedProfile['employmentCategory'],
+
+  Future<void> _updateProfile(Map<String, dynamic> updates) async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final updatedProfile = await authService.updateUserProfile(updates);
+
+      setState(() {
+        userProfile = Map<String, dynamic>.from(userProfile ?? {})
+          ..addAll(updatedProfile);
+        isLoading = false;
+      });
+
+      _showSnackBar('Profile updated successfully');
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showSnackBar('Failed to update profile: ${e.toString()}', isError: true);
+    }
+  }
+
+  Future<String?> _showTextFieldDialog(
+      String label, String currentValue) async {
+    String? value = currentValue;
+    return showDialog<String>(
       context: context,
-    ));
+      builder: (context) => AlertDialog(
+        title: Text('Edit $label'),
+        content: TextField(
+          controller: TextEditingController(text: currentValue),
+          decoration: InputDecoration(labelText: label),
+          onChanged: (text) => value = text,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, value),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<int?> _showNumberFieldDialog(String label, String currentValue) async {
+    String value = currentValue;
+    return showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $label'),
+        content: TextField(
+          controller: TextEditingController(text: currentValue),
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: label),
+          onChanged: (text) => value = text,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final intValue = int.tryParse(value);
+              Navigator.pop(context, intValue);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showGenderSelectionDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Gender'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: Gender.values
+              .map(
+                (gender) => ListTile(
+                  title: Text(_getGenderTitle(gender)),
+                  onTap: () => Navigator.pop(context, _getGenderTitle(gender)),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showCategorySelectionDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Category'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: UserCategory.values
+              .map(
+                (category) => ListTile(
+                  title: Text(_getCategoryTitle(category)),
+                  onTap: () =>
+                      Navigator.pop(context, _getCategoryTitle(category)),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showResidenceTypeSelectionDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Residence Type'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: ResidenceType.values
+              .map(
+                (type) => ListTile(
+                  title: Text(type == ResidenceType.onCampus
+                      ? 'On Campus'
+                      : 'Off Campus'),
+                  onTap: () => Navigator.pop(
+                      context,
+                      type == ResidenceType.onCampus
+                          ? 'oncampus'
+                          : 'offcampus'),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showEmploymentTypeSelectionDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Employment Type'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: EmploymentType.values
+              .map(
+                (type) => ListTile(
+                  title: Text(
+                      _formatEmploymentType(type.toString().split('.').last)),
+                  onTap: () =>
+                      Navigator.pop(context, type.toString().split('.').last),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showEmploymentCategorySelectionDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Employment Category'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: EmploymentCategory.values
+              .map(
+                (category) => ListTile(
+                  title: Text(_formatEmploymentCategory(
+                      category.toString().split('.').last)),
+                  onTap: () => Navigator.pop(
+                      context, category.toString().split('.').last),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<List<int>?> _showChildrenGradesDialog(
+      List<dynamic> currentGrades) async {
+    List<int> selectedGrades = List<int>.from(currentGrades);
+
+    return showDialog<List<int>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Children\'s Grades'),
+        content: StatefulBuilder(
+          builder: (context, setState) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CheckboxListTile(
+                  title: const Text('LKG'),
+                  value: selectedGrades.contains(0),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        selectedGrades.add(0);
+                      } else {
+                        selectedGrades.remove(0);
+                      }
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: const Text('UKG'),
+                  value: selectedGrades.contains(-1),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        selectedGrades.add(-1);
+                      } else {
+                        selectedGrades.remove(-1);
+                      }
+                    });
+                  },
+                ),
+                ...List.generate(
+                  12,
+                  (index) => CheckboxListTile(
+                    title: Text('Grade ${index + 1}'),
+                    value: selectedGrades.contains(index + 1),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value == true) {
+                          selectedGrades.add(index + 1);
+                        } else {
+                          selectedGrades.remove(index + 1);
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, selectedGrades),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatCategory(String? category) {
@@ -700,7 +913,30 @@ List<DropdownMenuItem<String>> _getDropdownItems(String keyName) {
       return 'Grade $grade';
     }).join(', ');
   }
-  
+
+  String _getGenderTitle(Gender category) {
+    switch (category) {
+      case Gender.male:
+        return 'Male';
+      case Gender.female:
+        return 'Female';
+      case Gender.nonBinary:
+        return 'Non-Binary';
+      case Gender.noReveal:
+        return 'Choose not to reveal';
+    }
+  }
+
+  String _getCategoryTitle(UserCategory category) {
+    switch (category) {
+      case UserCategory.student:
+        return 'IITM Student';
+      case UserCategory.employee:
+        return 'Employee';
+      case UserCategory.parent:
+        return 'Campus School Parent';
+      case UserCategory.relative:
+        return 'Relative';
+    }
+  }
 }
-
-

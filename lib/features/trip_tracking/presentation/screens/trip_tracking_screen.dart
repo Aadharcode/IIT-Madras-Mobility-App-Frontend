@@ -82,69 +82,69 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     }
   }
 
+  void showTripEndDialogSafely() {
+    if (context.mounted) {
+        _showTripEndDialog(context);
+    }
+}
+
+
   void startLocationTracking(BuildContext context, List<Monument> monuments) {
-    Monument? currentMonument;
-    Monument? previousMonument;
-    Timer.periodic(Duration(seconds: 1), (_) async {
-      final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      print("😊😊😊😊😊");
+  Monument? currentMonument;
+  Monument? previousMonument;
+  int sameMonumentCount = 0; // ✅ Persist same monument counter
 
-      final LatLng currentLocation = LatLng(position.latitude, position.longitude);
-      final Monument? nearestMonument = await MonumentService.findNearestMonument(currentLocation);
-      print(nearestMonument);
-      int sameMonumentCount = 0;
+  Timer.periodic(Duration(seconds: 1), (_) async {
+    if (!mounted) return;
 
-      if (nearestMonument == null) {
-        print('No nearby monument found.');
-        // startLocationTracking(context, monuments);
-        return;
+    final tripBloc = BlocProvider.of<TripBloc>(context);
+    final currentState = tripBloc.state;
+
+    // ✅ Prevent tracking if trip is already active
+    if (currentState.isActive) return;
+
+    final Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    final LatLng currentLocation = LatLng(position.latitude, position.longitude);
+
+    final Monument? nearestMonument = await MonumentService.findNearestMonument(currentLocation);
+
+    if (nearestMonument == null) {
+      print('No nearby monument found.');
+      return;
+    }
+
+    // ✅ Store previous monument before updating current
+    previousMonument = currentMonument;
+    currentMonument = nearestMonument;
+
+    print("🏛️ Current: ${currentMonument?.name} | Previous: ${previousMonument?.name}");
+
+    // ✅ If the user stays at the same monument for 10 checks, end trip
+    if (nearestMonument == previousMonument && previousMonument != null) {
+      sameMonumentCount++;
+      if (sameMonumentCount >= 300) {
+        print("🏁 Ending trip after 10 consecutive checks at ${nearestMonument.name}");
+        tripBloc.add(EndTrip());
+        sameMonumentCount = 0; // Reset counter after trip ends
       }
+      return; // Skip further logic if still at the same monument
+    }
 
-      final tripBloc = BlocProvider.of<TripBloc>(context);
-      final currentState = tripBloc.state;
-      previousMonument = currentMonument;
-      currentMonument = nearestMonument;
-      print("😊😊😊😊😊 $currentMonument & $previousMonument");
+    // ✅ Monument changed, reset counter
+    sameMonumentCount = 0;
 
-      if (nearestMonument == previousMonument && previousMonument != null) {
-        if (currentState.isActive) {
-          sameMonumentCount++; // Increment counter if the same monument is detected
-          
-          if (sameMonumentCount >= 300) {
-            // Case: Same monument for 10 consecutive checks & isActive = true → End Trip
-            print("Ending trip after 10 consecutive checks at ${nearestMonument.name}");
-            _showTripEndDialog(context);
-            sameMonumentCount = 0; // Reset counter after trip ends
-          }
-        }
-        return; // Do nothing if `isActive` is false
-      } 
-
-      // Monument changed, reset counter
-      sameMonumentCount = 0;
-
-      if (nearestMonument != previousMonument && currentState.isActive && previousMonument != null) {
-        tripBloc.add(TripUpdateMonumentEvent(
-        previousMonument: previousMonument!,
-        currentMonument: nearestMonument,
+    // ✅ Start a new trip if inactive
+    if (!currentState.isActive) {
+      print("🚗 Starting a new trip at ${nearestMonument.name}");
+      tripBloc.add(StartTrip(
+        userId: widget.userId,
+        startMonument: nearestMonument,
       ));
-        // Case: Different monument & isActive = true → Select new monument
-        tripBloc.add(TripUpdateMonumentEvent(
-          previousMonument: previousMonument!,
-          currentMonument: nearestMonument,
-        ));
-      } else if (nearestMonument != previousMonument && !currentState.isActive && previousMonument != null){
-        // Case: Different monument & isActive = false → Start Trip
-        print("Starting a new trip at ${nearestMonument.name}");
-        tripBloc.add(StartTrip(
-          userId: widget.userId,
-          startMonument: nearestMonument,
-        ));
-      }
-    });
-  }
+    }
+  });
+}
 
   void onMonumentChange(List<Monument> monuments) {
     final currentState = BlocProvider.of<TripBloc>(context).state;
@@ -575,16 +575,68 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
   }
 
   void _showTripEndDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => WillPopScope(
+  late Timer timeoutTimer; // Declare a Timer variable
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      timeoutTimer = Timer(const Duration(seconds: 5), () async {
+        try {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          );
+          final currentLocation = LatLng(
+            position.latitude,
+            position.longitude,
+          );
+          final nearestMonument = await MonumentService.findNearestMonument(
+              currentLocation);
+
+          if (nearestMonument == null) {
+            if (!dialogContext.mounted) return;
+            ScaffoldMessenger.of(dialogContext).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'You must be near a monument to end the trip'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+
+          if (!dialogContext.mounted) return;
+          // Auto-fill details as "Fill details later"
+          context.read<TripBloc>().add(UpdateTripDetails(
+            userId: widget.userId,
+            vehicleType: null,
+            purpose: null,
+            occupancy: null,
+            selectedMonuments: [],
+            endMonument: nearestMonument,
+          ));
+           context.read<TripBloc>().add(EndTrip());
+          Navigator.of(dialogContext).pop(); // Close dialog
+          context.read<TripBloc>().add(EndTrip());
+        } catch (e) {
+          if (!dialogContext.mounted) return;
+          ScaffoldMessenger.of(dialogContext).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
+
+      return WillPopScope(
         onWillPop: () async => false,
         child: BlocProvider.value(
           value: context.read<TripBloc>(),
           child: BlocConsumer<TripBloc, TripState>(
             listener: (context, state) {
               if (state.currentTrip == null && !state.isLoading) {
+                timeoutTimer.cancel(); // Cancel timer if trip ends
                 Navigator.of(dialogContext).pop();
               }
             },
@@ -599,9 +651,9 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                     : TripDetailsForm(
                         onSubmit: (vehicleType, purpose, occupancy,
                             selectedMonuments, endMonument) {
+                          timeoutTimer.cancel(); // Cancel timer when submitted
                           final bloc = context.read<TripBloc>();
 
-                          // Update trip details and end trip
                           bloc
                             ..add(UpdateTripDetails(
                               userId: widget.userId,
@@ -612,14 +664,16 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
                               endMonument: endMonument,
                             ))
                             ..add(EndTrip());
-
                           Navigator.of(dialogContext).pop();
                         },
                       ),
                 actions: [
                   if (!state.isLoading)
                     TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      onPressed: () {
+                        timeoutTimer.cancel(); // Cancel timer when manually closing
+                        Navigator.of(dialogContext).pop();
+                      },
                       child: const Text('Cancel'),
                     ),
                 ],
@@ -627,9 +681,10 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
             },
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   @override
   void dispose() {

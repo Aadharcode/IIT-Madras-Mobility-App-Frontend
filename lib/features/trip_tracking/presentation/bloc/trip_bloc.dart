@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'trip_state.dart';
 import '../../../authentication/data/services/auth_service.dart';
 import 'dart:convert';
+import '../../data/services/notification_service.dart';
 
 class TripBloc extends Bloc<TripEvent, TripState> {
   static const String baseUrl = 'http://ec2-13-232-246-85.ap-south-1.compute.amazonaws.com/api';
@@ -226,27 +227,35 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     Emitter<TripState> emit,
   ) async {
     if (state.currentTrip == null) {
+      print("🚫 No active trip to end!");
       emit(state.copyWith(error: 'No active trip to end'));
       return;
     }
 
     try {
+      await NotificationService.showTripEndedNotification();
+      print("⏳ Ending trip... Loading state set to true.");
       emit(state.copyWith(isLoading: true, error: null));
 
       // Get the current trip with all its details
       final currentTrip = state.currentTrip!;
+      print("📝 Current Trip Details: $currentTrip");
 
       // Create the updated trip with the end monument and time
       final endedTrip = currentTrip.copyWith(
         endTime: DateTime.now(),
         isActive: false,
       );
+      print("✅ Trip Ended! Final Details: $endedTrip");
 
       // Small delay to show loading state
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Cancel the location timer
-      _locationTimer?.cancel();
+      if (_locationTimer != null) {
+        _locationTimer!.cancel();
+        print("⏹️ Location tracking timer stopped.");
+      }
 
       // Reset all trip-related state
       emit(state.copyWith(
@@ -257,12 +266,15 @@ class TripBloc extends Bloc<TripEvent, TripState> {
         currentLocation: state.currentLocation,
         isActive: false,
       ));
+      print("🔄 Trip state updated. Trip moved to past trips.");
 
       // Reset the current trip state
       emit(state.copyWith(
         currentTrip: null,
       ));
+      print("🛑 Current trip reset to null.");
     } catch (e) {
+      print("❌ Error Ending Trip: $e");
       emit(state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -288,7 +300,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       monumentVisits: _monumentVisitTimes.entries
           .map((entry) => MonumentVisit(
                 monumentId: entry.key,
-                timestamp: entry.value,
+                timestamp: DateTime.now(),
               ))
           .toList(),
     );
@@ -357,7 +369,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       final monumentVisitsJson = _monumentVisitTimes.entries
           .map((entry) => {
                 'monument': entry.key,
-                'timestamp': entry.value.toIso8601String(),
+                'timestamp':  DateTime.now().millisecondsSinceEpoch,
               })
           .toList();
 
@@ -532,40 +544,81 @@ class TripBloc extends Bloc<TripEvent, TripState> {
     }
   }
 
-  Future<void> _onCheckNearbyMonument(
+  Monument? _lastDetectedMonument;
+  int _sameMonumentCount = 0;
+
+Future<void> _onCheckNearbyMonument(
     CheckNearbyMonument event,
     Emitter<TripState> emit,
   ) async {
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      final currentLocation = LatLng(position.latitude, position.longitude);
+  try {
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    final currentLocation = LatLng(position.latitude, position.longitude);
 
-      final nearestMonument =
-          await MonumentService.findNearestMonument(currentLocation);
+    final nearestMonument = await MonumentService.findNearestMonument(currentLocation);
 
-      if (nearestMonument != null) {
-        // Only add if not already in the set
-        _monumentVisitTimes[nearestMonument.id] = DateTime.now();
-
-        // Update the state with new monuments list
-        if (state.currentTrip != null) {
-          final updatedTrip = state.currentTrip!.copyWith(
-            monumentVisits: _monumentVisitTimes.entries
-                .map((entry) => MonumentVisit(
-                      monumentId: entry.key,
-                      timestamp: entry.value,
-                    ))
-                .toList(),
-          );
-          emit(state.copyWith(currentTrip: updatedTrip));
-        }
-      }
-    } catch (e) {
-      print('Error checking nearby monument: $e');
+    if (nearestMonument == null) {
+      print("🚫 No nearby monument found.");
+      return;
     }
+
+    // Check if it's the same monument as before
+    if (_lastDetectedMonument != null &&
+        _lastDetectedMonument!.id == nearestMonument.id) {
+      _sameMonumentCount++;
+    } else {
+      _sameMonumentCount = 1; // Reset count if a different monument is found
+    }
+
+    _lastDetectedMonument = nearestMonument;
+
+    print("🏛️ Nearest Monument: ${nearestMonument.id}, Count: $_sameMonumentCount");
+
+    // If the same monument is detected 3 times in a row
+    if (_sameMonumentCount == 30) {
+      print("✅ Same monument detected 3 times! Updating and ending trip.");
+
+      if (state.currentTrip != null) {
+        // Update trip details first
+        add(UpdateTripDetails(
+          userId: state.currentTrip!.userId,
+          vehicleType: null,
+          purpose: null,
+          occupancy: null,
+          selectedMonuments: null,
+          endMonument: nearestMonument,
+        ));
+
+        // Small delay to ensure update happens before ending trip
+        await Future.delayed(const Duration(seconds: 2));
+
+        // End the trip
+        add(EndTrip());
+      }
+    }
+
+    // Store the monument visit time
+    _monumentVisitTimes[nearestMonument.id] = DateTime.now();
+
+    // Update the state with the new list of visited monuments
+    if (state.currentTrip != null) {
+      final updatedTrip = state.currentTrip!.copyWith(
+        monumentVisits: _monumentVisitTimes.entries
+            .map((entry) => MonumentVisit(
+                  monumentId: entry.key,
+                  timestamp: entry.value,
+                ))
+            .toList(),
+      );
+      emit(state.copyWith(currentTrip: updatedTrip));
+    }
+  } catch (e) {
+    print('❌ Error checking nearby monument: $e');
   }
+}
+
 
   @override
   Future<void> close() {

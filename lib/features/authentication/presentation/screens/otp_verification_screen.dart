@@ -58,11 +58,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 (state.userCategory != null && state.residenceType != null)) {
               print(
                   '👤 User profile already complete or login flow - navigating to trip tracking');
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => TripTrackingScreen(userId: state.userId!),
-                ),
-              );
+             WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => TripTrackingScreen(userId: state.userId!)),
+                  );
+                }
+              });
             } else {
               print(
                   '👤 User profile incomplete - navigating to profile screen');

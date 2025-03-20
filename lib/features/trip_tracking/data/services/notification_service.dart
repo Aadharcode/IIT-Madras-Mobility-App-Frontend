@@ -118,4 +118,26 @@ class NotificationService {
       inputData: <String, dynamic>{'key': 'value'},
     );
   }
+  static Future<void> showTripEndedNotification() async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'trip_end_channel',
+      'Trip End Notification',
+      channelDescription: 'Notifies when a trip ends',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(),
+    );
+
+    await _notifications.show(
+      1,
+      'Trip Ended',
+      'Your trip has ended successfully.',
+      details,
+    );
+  }
 }

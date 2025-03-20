@@ -166,7 +166,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (userCategory != null) {
         try {
-          parsedCategory = UserCategory.values.firstWhere(
+          parsedCategory ??= UserCategory.values.firstWhere(
             (e) => e.toString().split('.').last == userCategory,
           );
         } catch (e) {
@@ -176,7 +176,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (residenceType != null) {
         try {
-          parsedResidence = ResidenceType.values.firstWhere(
+          parsedResidence ??= ResidenceType.values.firstWhere(
             (e) => e.toString().split('.').last == residenceType,
           );
         } catch (e) {
@@ -186,7 +186,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (gender != null) {
         try {
-          parsedGender = Gender.values.firstWhere(
+          parsedGender ??= Gender.values.firstWhere(
             (e) => e.toString().split('.').last == gender,
           );
         } catch (e) {

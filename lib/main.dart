@@ -9,12 +9,13 @@ import 'features/authentication/presentation/bloc/auth_event.dart';
 import 'features/trip_tracking/data/services/location_service.dart';
 import 'features/trip_tracking/presentation/bloc/trip_bloc.dart';
 import 'features/trip_tracking/presentation/screens/trip_tracking_screen.dart';
-import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
+// import 'features/trip_tracking/data/services/background_service.dart'; // Add this import
 import 'package:flutter/services.dart';
 import 'features/trip_tracking/data/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io' show Platform;
 import 'package:permission_handler/permission_handler.dart';
+// import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,7 @@ Future<bool> requestExactAlarmPermission() async {
   }
   return true;
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
